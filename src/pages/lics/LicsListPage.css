@@ -1,0 +1,116 @@
+/* src/pages/lics/LicsListPage.css */
+
+/* ✅ СКОУПИМ фон только на страницу лицевых, чтобы не ломать весь проект */
+.lics-page ion-content {
+  --background: #f7fafc;
+  --color: #1f2937;
+}
+
+/* === BREADCRUMBS === */
+.breadcrumbs-container {
+  padding: 12px 16px;
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  background: white;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  scrollbar-width: none;
+}
+.breadcrumbs-container::-webkit-scrollbar { display: none; }
+
+.breadcrumbs-container ion-chip {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  height: 32px;
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+}
+
+/* === КАРТОЧКА ПОИСКА === */
+.result-item {
+  --background: white;
+  --color: #1f2937;
+  --border-radius: 16px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+.result-item ion-label h2 {
+  font-weight: 600;
+  color: #111827;
+}
+
+.result-item ion-label p {
+  color: #6b7280;
+}
+
+.item-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  background: #eff6ff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  color: #2563eb;
+}
+
+/* === КАРТОЧКИ ЛИЦЕВЫХ === */
+.lic-card {
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  margin: 0 0 16px 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.03);
+  position: relative;
+  overflow: hidden;
+  color: #1f2937;
+}
+
+.lic-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  background: #2563eb;
+}
+
+.lic-number {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+
+.lic-fio {
+  font-size: 14px;
+  color: #4b5563;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.lic-address {
+  font-size: 12px;
+  color: #6b7280;
+  background: #f9fafb;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+/* Кнопка "Уже добавлен" */
+ion-button[disabled] {
+  opacity: 0.8;
+  --background: #f0fdf4 !important;
+  --color: #166534 !important;
+  --border-color: #bbf7d0 !important;
+}

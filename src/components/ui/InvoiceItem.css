@@ -1,0 +1,96 @@
+/* src/components/ui/InvoiceItem.css */
+
+.invoice-card {
+  background: #ffffff;
+  border-radius: 20px; /* Современное скругление */
+  margin: 12px 16px;
+  padding: 18px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04); /* Очень мягкая тень */
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.02);
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.invoice-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* Верхняя часть: Номер и Дата */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.invoice-number {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--corp-gray-700);
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.invoice-date {
+  font-size: 12px;
+  color: var(--corp-gray-400);
+  font-weight: 500;
+}
+
+/* Статус (Бейдж) */
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Цвета статусов */
+.status-badge.new {
+  background: #ebf8ff;
+  color: #3182ce;
+}
+
+.status-badge.done {
+  background: #f0fff4;
+  color: #38a169;
+}
+
+.status-badge.error {
+  background: #fff5f5;
+  color: #e53e3e;
+}
+
+/* Контент: Адрес и План */
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.info-row:last-child {
+  margin-bottom: 0;
+}
+
+.info-icon {
+  font-size: 18px;
+  margin-right: 10px;
+  min-width: 18px;
+  margin-top: 2px; /* Выравнивание иконки по первой строке текста */
+}
+
+.info-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--corp-gray-600);
+  line-height: 1.4;
+}
+
+/* Цвет иконок */
+.icon-blue { color: var(--corp-primary); }
+.icon-gray { color: var(--corp-gray-400); }

@@ -1,0 +1,64 @@
+/* Убираем стандартную границу Ionic */
+ion-tab-bar.floating-tab-bar {
+  border: none;
+}
+
+/* Скрываем линию сверху */
+ion-tab-bar.floating-tab-bar::before {
+  display: none;
+}
+
+.floating-tab-bar {
+  /* Позиционирование */
+  position: absolute;
+  bottom: 20px;
+  left: 16px;
+  right: 16px;
+  height: 68px; /* Чуть выше стандарта для удобства */
+  
+  /* Визуал */
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px); /* Эффект стекла (blur) */
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12); /* Мягкая глубокая тень */
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  
+  /* Внутренние отступы */
+  padding-bottom: 0; /* Убираем safe-area отступ внутри плашки */
+  contain: content;
+}
+
+/* Стили кнопок */
+.floating-tab-bar ion-tab-button {
+  --background: transparent;
+  --color: var(--corp-gray-400, #a0aec0);
+  --color-selected: var(--corp-primary, #086CA2);
+  --ripple-color: var(--corp-primary);
+  
+  border-radius: 16px;
+  margin: 4px;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Анимация при выборе */
+.floating-tab-bar ion-tab-button.tab-selected {
+  background: rgba(8, 108, 162, 0.05); /* Легкий фон активной вкладки */
+}
+
+.floating-tab-bar ion-tab-button ion-icon {
+  font-size: 26px;
+  margin-bottom: 2px;
+  transition: transform 0.2s;
+}
+
+/* "Прыжок" иконки при выборе */
+.floating-tab-bar ion-tab-button.tab-selected ion-icon {
+  transform: translateY(-2px);
+  color: var(--corp-primary);
+}
+
+.floating-tab-bar ion-tab-button ion-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}

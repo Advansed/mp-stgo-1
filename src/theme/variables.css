@@ -1,2 +1,68 @@
-/* For information on how to create your own theme, please refer to:
-http://ionicframework.com/docs/theming/ */
+/* src/theme/variables.css */
+
+/* ... (предыдущий код оставляем) ... */
+
+/* === 🔥 PREMIUM FAB BUTTON (Кнопка +) === */
+.corporate-fab-button {
+  --background: var(--corp-primary, #1e3a8a);
+  --background-activated: var(--corp-primary-dark, #102a70);
+  --background-hover: var(--corp-primary-light, #2b4cad);
+  --color: white;
+  --border-radius: 20px; /* Квадрат с сильными скруглениями (Modern) */
+  --box-shadow: 0 8px 25px rgba(30, 58, 138, 0.4);
+  
+  width: 56px;
+  height: 56px;
+  transition: all 0.2s ease;
+}
+
+.corporate-fab-button ion-icon {
+  font-size: 28px;
+}
+
+.corporate-fab-button:active {
+  transform: scale(0.92);
+  --box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
+}
+
+/* === 🔥 CLEAN ACTION SHEET (Меню) === */
+/* Убираем странные вырезы, делаем чистое нижнее меню */
+ion-action-sheet.sc-ion-action-sheet-md {
+  --background: white;
+  --color: #1f2937;
+  --button-color: #1f2937;
+}
+
+.action-sheet-group.sc-ion-action-sheet-md {
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  padding-bottom: 20px; /* Отступ снизу для красоты */
+  overflow: hidden;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+}
+
+.action-sheet-button.sc-ion-action-sheet-md {
+  padding-left: 24px;
+  font-size: 16px;
+  font-weight: 500;
+  height: 56px;
+  color: #374151;
+}
+
+.action-sheet-button.sc-ion-action-sheet-md:active {
+  background: #f3f4f6;
+}
+
+/* Кнопка отмены */
+.action-sheet-cancel.sc-ion-action-sheet-md {
+  color: #ef4444;
+  font-weight: 700;
+  border-top: 1px solid #f3f4f6;
+  margin-top: 8px;
+}
+
+/* Иконки в меню (если добавишь потом) */
+.action-sheet-icon {
+  margin-right: 16px;
+  color: #6b7280;
+}
