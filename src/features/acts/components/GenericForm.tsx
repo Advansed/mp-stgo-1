@@ -1,250 +1,248 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { 
-  IonList, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption, 
-  IonModal, IonDatetime, IonButton, IonIcon, IonSpinner
+  IonList, IonItem, IonLabel, IonInput, IonTextarea, 
+  IonSelect, IonSelectOption, IonDatetime, IonModal,
+  IonButton, IonIcon, IonContent, IonButtons, IonToolbar, IonTitle
 } from '@ionic/react';
-import { calendarOutline, cameraOutline, trashOutline } from 'ionicons/icons';
-import SignatureCanvas from 'react-signature-canvas';
+import { cameraOutline, closeCircle, pencilOutline, calendarOutline } from 'ionicons/icons';
 import { ActTemplateConfig } from '../types';
+
+// --- КОМПОНЕНТ ПОДПИСИ ---
+const SignaturePad = ({ value, onChange }: { value: string, onChange: (val: string) => void }) => {
+    // (Код подписи оставляем тот же - он рабочий)
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [isDrawing, setIsDrawing] = useState(false);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (canvas) {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 160;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+            }
+        }
+    }, []);
+
+    const startDrawing = (e: any) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        setIsDrawing(true);
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        ctx.beginPath();
+        ctx.moveTo(clientX - rect.left, clientY - rect.top);
+    };
+
+    const draw = (e: any) => {
+        if (!isDrawing) return;
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext('2d');
+        if (!ctx || !canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        ctx.lineTo(clientX - rect.left, clientY - rect.top);
+        ctx.stroke();
+    };
+
+    const endDrawing = () => {
+        if (!isDrawing) return;
+        setIsDrawing(false);
+        const canvas = canvasRef.current;
+        if (canvas) onChange(canvas.toDataURL('image/png'));
+    };
+
+    const clear = () => {
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext('2d');
+        if (ctx && canvas) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            onChange('');
+        }
+    };
+
+    if (value && !isDrawing) {
+        return (
+            <div style={{position: 'relative', width: '100%', textAlign: 'center'}}>
+                <img src={value} alt="Signature" style={{maxHeight: '120px', border: '1px solid #ccc', borderRadius: '8px'}} />
+                <IonButton fill="clear" color="danger" size="small" style={{position: 'absolute', top: 0, right: 0}} onClick={() => onChange('')}>
+                    <IonIcon slot="icon-only" icon={closeCircle} />
+                </IonButton>
+            </div>
+        );
+    }
+
+    return (
+        <div style={{width: '100%'}}>
+            <div style={{border: '2px dashed #cbd5e0', borderRadius: '12px', background: '#f8fafc', overflow: 'hidden', touchAction: 'none'}}>
+                <canvas
+                    ref={canvasRef}
+                    style={{width: '100%', height: '160px', display: 'block'}}
+                    onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={endDrawing} onMouseLeave={endDrawing}
+                    onTouchStart={startDrawing} onTouchMove={draw} onTouchEnd={endDrawing}
+                />
+                {!isDrawing && !value && <div style={{position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none', color: '#a0aec0', fontSize: '12px'}}>Расписаться</div>}
+            </div>
+            <div style={{textAlign: 'right'}}><IonButton fill="clear" size="small" color="medium" onClick={clear}>Очистить</IonButton></div>
+        </div>
+    );
+};
 
 interface GenericFormProps {
   template: ActTemplateConfig;
-  initialData: any;
+  initialData?: any;
   onSave: (data: any) => void;
 }
 
 export const GenericForm: React.FC<GenericFormProps> = ({ template, initialData, onSave }) => {
-  const [formData, setFormData] = useState({
-    ...(initialData?.details || {}),
-    act_number: initialData?.act_number || '',
-    act_date: initialData?.act_date || new Date().toISOString().split('T')[0]
+  const { control, handleSubmit, reset, formState: { errors } } = useForm({
+    defaultValues: initialData || {}
   });
 
-  const signPadRefs = useRef<Record<string, any>>({});
-  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const [loadingPhoto, setLoadingPhoto] = useState<string | null>(null); // Чтобы показать спиннер пока жмется фото
-
   useEffect(() => {
-     if (initialData) {
-         setFormData(prev => ({
-             ...prev,
-             ...(initialData.details || {}),
-             act_number: initialData.act_number || prev.act_number,
-             act_date: initialData.act_date || prev.act_date,
-             // Важно сохранить тип, если он был
-             type: initialData.type || prev.type
-         }));
-     }
-  }, [initialData]);
+    if (initialData && Object.keys(initialData).length > 0) {
+      reset(initialData);
+    }
+  }, [initialData, reset]);
 
-  const handleChange = (key: string, value: any) => {
-    setFormData(prev => ({ ...prev, [key]: value }));
+  const onError = (errors: any) => {
+      console.log("Validation Errors:", errors);
   };
 
-  // === ЛОГИКА ФОТО (Сжатие + Base64) ===
-  const handleFileChange = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+  const renderField = (field: any) => {
+    return (
+      <Controller
+        key={field.key}
+        name={field.key}
+        control={control}
+        rules={{ required: field.required ? 'Обязательное поле' : false }}
+        render={({ field: { onChange, value } }) => {
+          switch (field.type) {
+            
+            // 🔥 FIX: Надежный выбор даты через Modal (без ion-datetime-button)
+            case 'date':
+              return (
+                <>
+                  <IonItem 
+                    id={`date-modal-${field.key}`} 
+                    lines="none" 
+                    detail={false}
+                    style={{'--padding-start': '0', '--inner-padding-end': '0', cursor: 'pointer'}}
+                  >
+                     <IonIcon icon={calendarOutline} slot="start" color="primary" style={{marginRight: '8px'}} />
+                     <IonLabel style={{color: value ? '#000' : '#a0aec0'}}>
+                        {value ? new Date(value).toLocaleDateString() : 'Выберите дату'}
+                     </IonLabel>
+                  </IonItem>
+                  
+                  <IonModal trigger={`date-modal-${field.key}`} keepContentsMounted={true}>
+                    <IonContent>
+                        <IonToolbar><IonButtons slot="end"><IonButton onClick={() => document.querySelector('ion-modal')?.dismiss()}>Готово</IonButton></IonButtons></IonToolbar>
+                        <div style={{display: 'flex', justifyContent: 'center', marginTop: '20px'}}>
+                            <IonDatetime 
+                                presentation="date" 
+                                value={value} 
+                                onIonChange={e => onChange(e.detail.value)} 
+                            />
+                        </div>
+                    </IonContent>
+                  </IonModal>
+                </>
+              );
 
-      setLoadingPhoto(key);
-      
-      const reader = new FileReader();
-      reader.onload = (event) => {
-          // Здесь можно добавить логику сжатия (через canvas), если фото слишком большие
-          // Пока сохраняем как есть Base64
-          handleChange(key, event.target?.result);
-          setLoadingPhoto(null);
-      };
-      reader.readAsDataURL(file);
-  };
+            case 'select':
+              return (
+                <IonSelect value={value} onIonChange={e => onChange(e.detail.value)} placeholder="Выберите" interface="action-sheet">
+                  {field.options?.map((opt: string) => <IonSelectOption key={opt} value={opt}>{opt}</IonSelectOption>)}
+                </IonSelect>
+              );
 
-  const triggerFileInput = (key: string) => {
-      fileInputRefs.current[key]?.click();
-  };
+            case 'textarea':
+            case 'address':
+              return <IonTextarea value={value} onIonInput={e => onChange(e.detail.value)} autoGrow rows={3} placeholder={field.label} />;
 
-  const clearPhoto = (key: string) => {
-      handleChange(key, null);
-      if (fileInputRefs.current[key]) fileInputRefs.current[key]!.value = '';
-  };
+            case 'image':
+              return (
+                <div style={{width: '100%', marginTop: '8px'}}>
+                   {value ? (
+                       <div style={{position: 'relative', width: '100%', height: '200px', borderRadius: '12px', overflow: 'hidden'}}>
+                           <img src={value} style={{width: '100%', height: '100%', objectFit: 'cover'}} alt="evidence" />
+                           <div style={{position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.5)', borderRadius: '50%', padding: '4px'}} onClick={() => onChange('')}>
+                               <IonIcon icon={closeCircle} style={{color: 'white', fontSize: '24px'}} />
+                           </div>
+                       </div>
+                   ) : (
+                       <div style={{border: '2px dashed #cbd5e0', borderRadius: '12px', height: '100px', background: '#f8fafc', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative'}}>
+                           <IonIcon icon={cameraOutline} style={{fontSize: '24px', color: '#a0aec0'}} />
+                           <div style={{fontSize: '12px', color: '#a0aec0'}}>Добавить фото</div>
+                           <input type="file" accept="image/*" style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0}}
+                              onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                      const reader = new FileReader();
+                                      reader.onloadend = () => onChange(reader.result);
+                                      reader.readAsDataURL(file);
+                                  }
+                              }}
+                           />
+                       </div>
+                   )}
+                </div>
+              );
 
-  const handleSave = () => {
-    const finalData = { ...formData };
-    
-    // Собираем подписи
-    Object.keys(signPadRefs.current).forEach(key => {
-        const ref = signPadRefs.current[key];
-        if (ref && typeof ref.isEmpty === 'function' && !ref.isEmpty()) {
-            finalData[key] = { dataUrl: ref.toDataURL(), format: 'image/png' };
-        }
-    });
+            case 'signature':
+                return <SignaturePad value={value} onChange={onChange} />;
 
-    // Вытаскиваем корневые поля
-    const { act_number, act_date, type, id, ...details } = finalData;
-    
-    onSave({
-        ...initialData,
-        act_number,
-        act_date,
-        type,
-        details 
-    });
-  };
-
-  const displayDate = (isoDate: string) => {
-    if (!isoDate) return 'Выберите дату';
-    try { return new Date(isoDate).toLocaleDateString('ru-RU'); } catch { return isoDate; }
+            default:
+              return (
+                <IonInput 
+                    value={value} 
+                    onIonInput={e => onChange(e.detail.value)} 
+                    // 🔥 FIX: Если тип number, принудительно делаем number, чтобы в JSON ушло число
+                    type={field.type === 'number' ? 'number' : 'text'}
+                    placeholder={field.label}
+                />
+              );
+          }
+        }}
+      />
+    );
   };
 
   return (
-    <div style={{paddingBottom: '80px'}}>
-      <IonList lines="none">
+    <form onSubmit={handleSubmit(onSave, onError)}>
+      <IonList lines="none" style={{background: 'transparent', paddingBottom: '140px'}}>
         {template.fields.map((field) => (
-          <React.Fragment key={field.key}>
+          <div key={field.key} style={{marginBottom: '16px'}}>
             {field.section && (
-              <div style={{
-                  background: '#f4f5f8', padding: '12px 16px', 
-                  fontWeight: '800', color: '#555', marginTop: '16px',
-                  textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px'
-              }}>
+              <div style={{fontSize: '13px', fontWeight: '800', color: '#4a5568', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '24px 4px 8px 4px'}}>
                 {field.section}
               </div>
             )}
-
-            <IonItem style={{'--background': 'white', '--min-height': '60px', marginBottom: '8px', borderRadius: '12px', border: '1px solid #f0f0f0'}}>
-              
-              {/* --- TEXT --- */}
-              {field.type === 'string' && (
-                <>
-                    <IonLabel position="stacked" color="medium" style={{fontSize: '12px'}}>{field.label}</IonLabel>
-                    <IonInput 
-                        value={formData[field.key]} 
-                        onIonChange={e => handleChange(field.key, e.detail.value)} 
-                        placeholder="..."
-                    />
-                </>
-              )}
-
-              {/* --- DATE --- */}
-              {field.type === 'date' && (
-                 <>
-                   <IonLabel color="medium" style={{fontSize: '14px'}}>{field.label}</IonLabel>
-                   <IonButton 
-                      fill="outline" color="dark" slot="end" 
-                      id={`date-trigger-${field.key}`}
-                      style={{'--border-radius': '8px', fontSize: '14px', height: '36px'}}
-                   >
-                     <IonIcon icon={calendarOutline} slot="start" />
-                     {displayDate(formData[field.key])}
-                   </IonButton>
-                   <IonModal trigger={`date-trigger-${field.key}`} keepContentsMounted={true}>
-                     <div style={{padding: 20, background: 'white', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
-                       <IonDatetime 
-                          presentation="date"
-                          value={formData[field.key]}
-                          onIonChange={e => handleChange(field.key, e.detail.value)}
-                          style={{margin: '0 auto'}}
-                       />
-                       <IonButton expand="block" onClick={() => document.querySelector<any>(`ion-modal#date-modal-${field.key}`)?.dismiss()}>Готово</IonButton>
-                     </div>
-                   </IonModal>
-                 </>
-              )}
-
-              {/* --- SELECT --- */}
-              {field.type === 'select' && (
-                <>
-                    <IonLabel position="stacked" color="medium" style={{fontSize: '12px'}}>{field.label}</IonLabel>
-                    <IonSelect 
-                        value={formData[field.key]} 
-                        onIonChange={e => handleChange(field.key, e.detail.value)}
-                        interface="action-sheet" placeholder="Выберите..."
-                    >
-                        {field.options?.map(opt => <IonSelectOption key={opt} value={opt}>{opt}</IonSelectOption>)}
-                    </IonSelect>
-                </>
-              )}
-
-              {/* --- ADDRESS (READONLY) --- */}
-              {field.type === 'address' && (
-                  <>
-                    <IonLabel position="stacked" color="medium" style={{fontSize: '12px'}}>{field.label}</IonLabel>
-                    <IonInput value={formData[field.key]} readonly style={{fontWeight: 'bold'}} />
-                  </>
-              )}
-
-              {/* --- 🔥 PHOTO (НОВОЕ ПОЛЕ) --- */}
-              {field.type === 'photo' && (
-                  <div style={{width: '100%', padding: '10px 0'}}>
-                      <div style={{fontSize: '12px', color: '#666', marginBottom: '8px'}}>{field.label}</div>
-                      
-                      <input 
-                          type="file" 
-                          accept="image/*" 
-                          capture="environment" // Запрос камеры
-                          ref={el => fileInputRefs.current[field.key] = el}
-                          style={{display: 'none'}}
-                          onChange={(e) => handleFileChange(field.key, e)}
-                      />
-
-                      {loadingPhoto === field.key ? (
-                          <div style={{height: 150, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9f9f9', borderRadius: 12}}>
-                              <IonSpinner />
-                          </div>
-                      ) : formData[field.key] ? (
-                          <div style={{position: 'relative', width: '100%', height: '200px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #ddd'}}>
-                              <img src={formData[field.key]} alt="Preview" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
-                              <IonButton 
-                                  color="danger" size="small" 
-                                  onClick={() => clearPhoto(field.key)}
-                                  style={{position: 'absolute', top: '10px', right: '10px'}}
-                              >
-                                  <IonIcon icon={trashOutline} slot="icon-only" />
-                              </IonButton>
-                          </div>
-                      ) : (
-                          <div 
-                              onClick={() => triggerFileInput(field.key)}
-                              style={{
-                                  height: '100px', border: '2px dashed #ccc', borderRadius: '12px', 
-                                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                  color: '#999', cursor: 'pointer', background: '#f9f9f9'
-                              }}
-                          >
-                              <IonIcon icon={cameraOutline} style={{fontSize: '32px', marginBottom: '4px'}} />
-                              <span style={{fontSize: '12px'}}>Сделать фото</span>
-                          </div>
-                      )}
-                  </div>
-              )}
-
-              {/* --- SIGNATURE --- */}
-              {field.type === 'sign' && (
-                  <div style={{width: '100%', padding: '10px 0'}}>
-                      <div style={{fontSize: '12px', color: '#666', marginBottom: '8px'}}>{field.label}</div>
-                      <div style={{border: '1px solid #e2e8f0', borderRadius: '12px', height: '140px', background: '#f8fafc', overflow: 'hidden'}}>
-                          <SignatureCanvas 
-                              ref={(ref) => { signPadRefs.current[field.key] = ref; }}
-                              canvasProps={{ className: 'sigCanvas', style: {width: '100%', height: '100%'} }} 
-                              clearOnResize={false}
-                          />
-                      </div>
-                      <div style={{textAlign: 'right', marginTop: '4px'}}>
-                         <IonButton fill="clear" size="small" color="danger" onClick={() => signPadRefs.current[field.key]?.clear()}>
-                            Очистить
-                         </IonButton>
-                      </div>
-                  </div>
-              )}
+            <IonItem style={{'--background': 'white', '--border-radius': '16px', '--padding-start': '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', border: errors[field.key] ? '1px solid #e53e3e' : 'none'}}>
+              <div style={{width: '100%', padding: '10px 0'}}>
+                  <IonLabel position="stacked" style={{marginBottom: '6px', fontSize: '12px', fontWeight: '600', color: '#718096'}}>
+                    {field.label} {field.required && <span style={{color: '#e53e3e'}}>*</span>}
+                  </IonLabel>
+                  {renderField(field)}
+              </div>
             </IonItem>
-          </React.Fragment>
+          </div>
         ))}
       </IonList>
 
-      <div style={{padding: '20px'}}>
-        <IonButton expand="block" onClick={handleSave} style={{'--border-radius': '12px', height: '50px', fontWeight: '600'}}>
-            Сохранить Акт
+      <div style={{position: 'fixed', bottom: '100px', left: '16px', right: '16px', zIndex: 1000}}>
+        <IonButton expand="block" type="submit" style={{'--border-radius': '14px', fontWeight: 'bold', height: '54px', '--box-shadow': '0 8px 20px rgba(49, 130, 206, 0.3)'}}>
+          Сохранить акт
         </IonButton>
       </div>
-    </div>
+    </form>
   );
 };

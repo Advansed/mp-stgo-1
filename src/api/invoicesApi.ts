@@ -32,5 +32,12 @@ export const invoicesApi = {
     }
 
     return res;
+  },
+
+  // 🔥 НОВЫЙ МЕТОД: Закрыть заявку
+  closeInvoice: async (token: string, id: string) => {
+      // Используем прямой путь, если в API_METHODS нет константы
+      const response = await post(`/invoices/${id}/close`, { token });
+      return response;
   }
 };

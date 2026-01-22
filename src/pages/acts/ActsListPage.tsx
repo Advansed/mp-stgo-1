@@ -3,24 +3,15 @@ import { useParams, useHistory } from 'react-router-dom';
 import { 
   IonPage, IonContent, IonHeader, IonToolbar, IonTitle, 
   IonButtons, IonBackButton, IonFab, IonFabButton, IonIcon, 
-  IonList, IonItem, IonLabel, IonActionSheet, IonSpinner, IonBadge 
+  IonList, IonItem, IonLabel, IonActionSheet, IonSpinner, IonButton, IonToast
 } from '@ionic/react';
 import { 
   add, documentTextOutline, createOutline, 
-  arrowBack, documentOutline, batteryChargingOutline, 
-  swapHorizontalOutline, shieldCheckmarkOutline 
+  sendOutline, arrowForward
 } from 'ionicons/icons';
 import { useActsStore } from '../../store/actsStore';
 import { useAuthStore } from '../../store/authStore';
 import { ACT_TEMPLATES } from '../../features/acts/configs/registry';
-
-// Хелпер для иконок и цветов
-const getActIcon = (type: string) => {
-  if (type.includes('br')) return { icon: batteryChargingOutline, color: '#3182ce', bg: '#ebf8ff' }; // Синий
-  if (type.includes('mr') || type.includes('mi')) return { icon: swapHorizontalOutline, color: '#805ad5', bg: '#f3e8ff' }; // Фиолетовый
-  if (type.includes('plomb') || type.includes('sf')) return { icon: shieldCheckmarkOutline, color: '#e53e3e', bg: '#fff5f5' }; // Красный
-  return { icon: documentTextOutline, color: '#718096', bg: '#edf2f7' }; // Серый
-};
 
 export const ActsListPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +20,8 @@ export const ActsListPage: React.FC = () => {
   const { list, loading, loadActs } = useActsStore();
   
   const [showActionSheet, setShowActionSheet] = useState(false);
+  const [isSent, setIsSent] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     if (token && id) loadActs(token, id);
@@ -36,84 +29,76 @@ export const ActsListPage: React.FC = () => {
 
   const actionSheetButtons = Object.values(ACT_TEMPLATES).map(tpl => ({
     text: tpl.name,
-    handler: () => {
-      history.push(`/app/invoices/${id}/acts/new/${tpl.type}`);
-    }
+    handler: () => history.push(`/app/invoices/${id}/acts/new/${tpl.type}`)
   }));
+
+  const hasActs = list.length > 0;
+
+  const handleSendAll = () => {
+    setIsSent(true);
+    setShowToast(true);
+  };
 
   return (
     <IonPage>
       <IonHeader className="ion-no-border">
         <IonToolbar>
           <IonButtons slot="start">
-             <IonBackButton defaultHref={`/app/invoices/${id}`} text="" icon={arrowBack} color="dark" />
+             <IonBackButton defaultHref={`/app/invoices/${id}`} text="" color="dark" />
           </IonButtons>
-          <IonTitle style={{fontWeight: 700}}>Документы</IonTitle>
+          <IonTitle>Документы</IonTitle>
         </IonToolbar>
       </IonHeader>
 
       <IonContent fullscreen style={{'--background': '#f7fafc'}}>
-        {loading && <div className="ion-text-center ion-padding"><IonSpinner /></div>}
+        <div style={{paddingBottom: '250px'}}>
+            {loading && <div className="ion-text-center ion-padding"><IonSpinner /></div>}
 
-        {!loading && list.length === 0 && (
-            <div style={{textAlign: 'center', marginTop: '120px', color: '#a0aec0'}}>
-                <div style={{background: '#edf2f7', width: 80, height: 80, borderRadius: '50%', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                    <IonIcon icon={documentOutline} style={{fontSize: '40px', opacity: 0.6}} />
+            {!loading && list.length === 0 && (
+                <div style={{textAlign: 'center', marginTop: '60px', padding: '20px', color: '#a0aec0'}}>
+                    <p>Актов пока нет.</p>
+                    <p>Нажмите "+", чтобы создать.</p>
                 </div>
-                <h3 style={{fontSize: '18px', fontWeight: 600, color: '#2d3748', margin: 0}}>Нет актов</h3>
-                <p style={{fontSize: '14px', color: '#718096', marginTop: 8}}>Создайте первый документ для этой заявки</p>
-            </div>
-        )}
+            )}
 
-        <IonList style={{background: 'transparent', padding: '16px'}}>
-            {list.map((act) => {
-                const template = ACT_TEMPLATES[act.type];
-                const style = getActIcon(act.type);
-                
-                return (
-                    <IonItem 
-                        key={act.id} 
-                        button 
-                        onClick={() => history.push(`/app/invoices/${id}/acts/${act.id}/edit`)}
-                        style={{
-                            '--background': 'white', 
-                            '--border-radius': '20px', 
-                            marginBottom: '12px',
-                            boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
-                            border: '1px solid rgba(0,0,0,0.02)'
-                        }}
-                        lines="none"
-                        detail={false}
-                    >
-                        <div style={{
-                            width: '48px', height: '48px', background: style.bg, 
-                            borderRadius: '14px', display: 'flex', alignItems: 'center', 
-                            justifyContent: 'center', marginRight: '16px', color: style.color
-                        }}>
-                            <IonIcon icon={style.icon} size="small" />
-                        </div>
-                        <IonLabel>
-                            <h2 style={{fontWeight: '700', fontSize: '15px', color: '#1a202c', marginBottom: '4px'}}>
-                                {template?.name || act.type}
-                            </h2>
-                            <p style={{fontSize: '13px', color: '#718096', display: 'flex', alignItems: 'center', gap: '8px'}}>
-                                <span>№ {act.act_number}</span>
-                                <span style={{width: 4, height: 4, background: '#cbd5e0', borderRadius: '50%'}}></span>
-                                <span>{new Date(act.act_date).toLocaleDateString('ru-RU')}</span>
-                            </p>
-                        </IonLabel>
-                        
-                        {/* Статус (Бейдж) */}
-                        <div slot="end" style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px'}}>
-                            <IonIcon icon={createOutline} color="medium" style={{opacity: 0.3, fontSize: '20px'}} />
-                        </div>
-                    </IonItem>
-                );
-            })}
-        </IonList>
+            <IonList style={{background: 'transparent', padding: '16px'}}>
+                {list.map((act) => {
+                    const template = ACT_TEMPLATES[act.type];
+                    return (
+                        <IonItem 
+                            key={act.id} 
+                            button 
+                            onClick={() => history.push(`/app/invoices/${id}/acts/${act.id}/edit`)}
+                            style={{
+                                '--background': 'white', 
+                                '--border-radius': '16px', 
+                                marginBottom: '10px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+                            }}
+                            lines="none"
+                            detail={false}
+                        >
+                            <div style={{
+                                width: '42px', height: '42px', background: '#ebf8ff', 
+                                borderRadius: '12px', display: 'flex', alignItems: 'center', 
+                                justifyContent: 'center', marginRight: '16px', color: '#3182ce'
+                            }}>
+                                <IonIcon icon={documentTextOutline} size="small" />
+                            </div>
+                            <IonLabel>
+                                <h2 style={{fontWeight: '700', fontSize: '15px'}}>{template?.name || act.type}</h2>
+                                <p style={{fontSize: '13px', color: '#718096'}}>№ {act.act_number}</p>
+                            </IonLabel>
+                            <IonIcon icon={createOutline} slot="end" color="medium" style={{opacity: 0.4}} />
+                        </IonItem>
+                    );
+                })}
+            </IonList>
+        </div>
 
-        <IonFab vertical="bottom" horizontal="end" slot="fixed" style={{ marginBottom: '90px', marginRight: '16px' }}>
-            <IonFabButton onClick={() => setShowActionSheet(true)} className="corporate-fab-button">
+        {/* 🔥 КНОПКА ПЛЮС (ПОДНЯТА ОЧЕНЬ ВЫСОКО - 200px) */}
+        <IonFab vertical="bottom" horizontal="end" slot="fixed" style={{ marginBottom: '200px', marginRight: '16px' }}>
+            <IonFabButton onClick={() => setShowActionSheet(true)} color="secondary">
                 <IonIcon icon={add} />
             </IonFabButton>
         </IonFab>
@@ -121,10 +106,43 @@ export const ActsListPage: React.FC = () => {
         <IonActionSheet
           isOpen={showActionSheet}
           onDidDismiss={() => setShowActionSheet(false)}
-          header="Выберите тип документа"
-          mode="md"
-          buttons={[...actionSheetButtons, { text: 'Отмена', role: 'cancel', cssClass: 'action-sheet-cancel' }]}
+          header="Выберите тип акта"
+          buttons={[...actionSheetButtons, { text: 'Отмена', role: 'cancel' }]}
         />
+        
+        <IonToast isOpen={showToast} message="Отправлено!" duration={2000} color="success" onDidDismiss={() => setShowToast(false)}/>
+        
+        {/* 🔥 КНОПКА ОТПРАВИТЬ (ПОДНЯТА НА 120px) */}
+        <div style={{
+            position: 'fixed', bottom: '120px', left: '16px', right: '16px', zIndex: 999
+        }}>
+            {!isSent ? (
+                <IonButton 
+                    expand="block" 
+                    color="primary" 
+                    disabled={!hasActs} 
+                    onClick={handleSendAll}
+                    style={{
+                        height: '56px', fontWeight: 'bold', 
+                        '--border-radius': '14px', 
+                        '--box-shadow': '0 8px 20px rgba(49, 130, 206, 0.4)'
+                    }}
+                >
+                    <IonIcon icon={sendOutline} slot="start" />
+                    Отправить акты
+                </IonButton>
+            ) : (
+                <IonButton 
+                    expand="block" 
+                    color="success" 
+                    onClick={() => history.push(`/app/invoices/${id}/final-act`)}
+                    style={{height: '56px', fontWeight: 'bold', '--border-radius': '14px'}}
+                >
+                    Далее: Акт выполненных работ
+                    <IonIcon icon={arrowForward} slot="end" />
+                </IonButton>
+            )}
+        </div>
       </IonContent>
     </IonPage>
   );
