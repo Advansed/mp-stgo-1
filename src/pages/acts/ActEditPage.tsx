@@ -22,7 +22,7 @@ export const ActEditPage: React.FC = () => {
   const { currentAct, loadActDetails, saveAct, loading: actLoading, clearCurrentAct, setCurrentAct } = useActsStore();
   
   // 1. Ищем заявку в памяти
-  const invoiceFromStore = useInvoiceStore(s => s.list.find(i => i.id === id));
+  const invoiceFromStore = useInvoiceStore(s => s.list.find(i => String(i.id) === String(id)));
   
   // 2. Локальный стейт для догрузки
   const [fetchedInvoice, setFetchedInvoice] = useState<any>(null);
@@ -56,7 +56,7 @@ export const ActEditPage: React.FC = () => {
         console.log("Пытаюсь найти заявку на сервере...", id);
         invoicesApi.fetchAll(token).then(data => {
             if (Array.isArray(data)) {
-                const found = data.find((i:any) => i.id === id);
+                const found = data.find((i:any) => String(i.id) === String(id));
                 if(found) {
                     console.log("Заявка найдена:", found);
                     setFetchedInvoice(found);

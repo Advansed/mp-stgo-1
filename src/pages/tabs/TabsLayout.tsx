@@ -12,6 +12,8 @@ import { SettingsPage } from '../settings/SettingsPage';
 import { ActEditPage } from '../acts/ActEditPage';
 import { ActsListPage } from '../acts/ActsListPage';
 import { ActPdfViewerPage } from '../acts/ActPdfViewerPage';
+import { LicDetailsPage } from '../lics/LicDetailsPage';
+import { FinalActPage } from '../acts/FinalActPage';
 
 import '../../theme/floating-tab.css';
 
@@ -19,16 +21,16 @@ export const TabsLayout: React.FC = () => {
   return (
     <IonTabs>
       <IonRouterOutlet>
-        
         {/* === АКТЫ === */}
-        {/* 1. Редактор */}
         <Route exact path="/app/invoices/:id/acts/:actId/edit" component={ActEditPage} />
         <Route exact path="/app/invoices/:id/acts/new/:type" component={ActEditPage} />
         <Route exact path="/app/invoices/:id/acts/:actId/pdf" component={ActPdfViewerPage} />
-        
-        {/* 2.СПИСОК АКТОВ (Исправление белого экрана) */}
-        <Route exact path="/app/invoices/:id/acts" component={ActsListPage} />
 
+        {/* ФИНАЛЬНЫЙ АКТ */}
+        <Route exact path="/app/invoices/:id/final-act" component={FinalActPage} />
+        
+        {/* СПИСОК АКТОВ */}
+        <Route exact path="/app/invoices/:id/acts" component={ActsListPage} />
 
         {/* === ЗАЯВКИ === */}
         <Route exact path="/app/invoices/:id/address" component={InvoiceAddressPage} />
@@ -36,6 +38,7 @@ export const TabsLayout: React.FC = () => {
         <Route exact path="/app/invoices" component={InvoicesListPage} />
         
         {/* === ЛИЦЕВЫЕ === */}
+        <Route exact path="/app/lics/:code" component={LicDetailsPage} />
         <Route exact path="/app/lics" component={LicsListPage} />
         
         {/* === НАСТРОЙКИ === */}
@@ -44,7 +47,6 @@ export const TabsLayout: React.FC = () => {
         <Route exact path="/app">
           <Redirect to="/app/invoices" />
         </Route>
-
       </IonRouterOutlet>
 
       <IonTabBar slot="bottom" className="floating-tab-bar">

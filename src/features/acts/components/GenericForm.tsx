@@ -3,14 +3,13 @@ import { useForm, Controller } from 'react-hook-form';
 import { 
   IonList, IonItem, IonLabel, IonInput, IonTextarea, 
   IonSelect, IonSelectOption, IonDatetime, IonModal,
-  IonButton, IonIcon, IonContent, IonButtons, IonToolbar, IonTitle
+  IonButton, IonIcon, IonContent, IonHeader, IonToolbar, IonButtons, IonTitle // 🔥 ДОБАВИЛ IonHeader
 } from '@ionic/react';
 import { cameraOutline, closeCircle, pencilOutline, calendarOutline } from 'ionicons/icons';
 import { ActTemplateConfig } from '../types';
 
 // --- КОМПОНЕНТ ПОДПИСИ ---
 const SignaturePad = ({ value, onChange }: { value: string, onChange: (val: string) => void }) => {
-    // (Код подписи оставляем тот же - он рабочий)
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
 
@@ -31,13 +30,13 @@ const SignaturePad = ({ value, onChange }: { value: string, onChange: (val: stri
     const startDrawing = (e: any) => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        const ctx = canvas.getContext('2d');
         setIsDrawing(true);
+        const ctx = canvas.getContext('2d');
         const rect = canvas.getBoundingClientRect();
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        ctx.beginPath();
-        ctx.moveTo(clientX - rect.left, clientY - rect.top);
+        ctx?.beginPath();
+        ctx?.moveTo(clientX - rect.left, clientY - rect.top);
     };
 
     const draw = (e: any) => {
@@ -106,6 +105,8 @@ export const GenericForm: React.FC<GenericFormProps> = ({ template, initialData,
     defaultValues: initialData || {}
   });
 
+  const [showDateModal, setShowDateModal] = useState<string | null>(null);
+
   useEffect(() => {
     if (initialData && Object.keys(initialData).length > 0) {
       reset(initialData);
@@ -126,26 +127,37 @@ export const GenericForm: React.FC<GenericFormProps> = ({ template, initialData,
         render={({ field: { onChange, value } }) => {
           switch (field.type) {
             
-            // Надежный выбор даты через Modal (без ion-datetime-button)
+            // 🔥 БЕЗОПАСНАЯ ДАТА (Через модалку, без крашей)
             case 'date':
               return (
                 <>
                   <IonItem 
-                    id={`date-modal-${field.key}`} 
                     lines="none" 
-                    detail={false}
+                    detail={false} 
+                    onClick={() => setShowDateModal(field.key)}
                     style={{'--padding-start': '0', '--inner-padding-end': '0', cursor: 'pointer'}}
                   >
                      <IonIcon icon={calendarOutline} slot="start" color="primary" style={{marginRight: '8px'}} />
                      <IonLabel style={{color: value ? '#000' : '#a0aec0'}}>
-                        {value ? new Date(value).toLocaleDateString() : 'Выберите дату'}
+                        {value ? new Date(value).toLocaleDateString('ru-RU') : 'Выберите дату'}
                      </IonLabel>
                   </IonItem>
                   
-                  <IonModal trigger={`date-modal-${field.key}`} keepContentsMounted={true}>
-                    <IonContent>
-                        <IonToolbar><IonButtons slot="end"><IonButton onClick={() => document.querySelector('ion-modal')?.dismiss()}>Готово</IonButton></IonButtons></IonToolbar>
-                        <div style={{display: 'flex', justifyContent: 'center', marginTop: '20px'}}>
+                  <IonModal 
+                    isOpen={showDateModal === field.key} 
+                    onDidDismiss={() => setShowDateModal(null)}
+                    keepContentsMounted={true} 
+                  >
+                    <IonHeader>
+                        <IonToolbar>
+                            <IonTitle>Выберите дату</IonTitle>
+                            <IonButtons slot="end">
+                                <IonButton onClick={() => setShowDateModal(null)}>Закрыть</IonButton>
+                            </IonButtons>
+                        </IonToolbar>
+                    </IonHeader>
+                    <IonContent className="ion-padding">
+                        <div style={{display: 'flex', justifyContent: 'center'}}>
                             <IonDatetime 
                                 presentation="date" 
                                 value={value} 
@@ -205,7 +217,6 @@ export const GenericForm: React.FC<GenericFormProps> = ({ template, initialData,
                 <IonInput 
                     value={value} 
                     onIonInput={e => onChange(e.detail.value)} 
-                    // Если тип number, принудительно делаем number, чтобы в JSON ушло число
                     type={field.type === 'number' ? 'number' : 'text'}
                     placeholder={field.label}
                 />

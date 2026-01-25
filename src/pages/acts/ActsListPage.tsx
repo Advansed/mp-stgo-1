@@ -17,11 +17,13 @@ export const ActsListPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
   const token = useAuthStore(s => s.token);
-  const { list, loading, loadActs } = useActsStore();
+  const { list, loading, loadActs, sendAllActs } = useActsStore();
   
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [errorToast, setErrorToast] = useState<string | null>(null);
 
   useEffect(() => {
     if (token && id) loadActs(token, id);
@@ -34,9 +36,19 @@ export const ActsListPage: React.FC = () => {
 
   const hasActs = list.length > 0;
 
-  const handleSendAll = () => {
-    setIsSent(true);
-    setShowToast(true);
+  const handleSendAll = async () => {
+    if (!token || !id) return;
+    setSending(true);
+    try {
+      await sendAllActs(token, id);
+      setIsSent(true);
+      setShowToast(true);
+    } catch (e: any) {
+      console.error('Send acts failed:', e);
+      setErrorToast(e?.message || 'Не удалось отправить акты');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -96,7 +108,6 @@ export const ActsListPage: React.FC = () => {
             </IonList>
         </div>
 
-        {/* КНОПКА ПЛЮС (ПОДНЯТА ОЧЕНЬ ВЫСОКО - 200px) */}
         <IonFab vertical="bottom" horizontal="end" slot="fixed" style={{ marginBottom: '200px', marginRight: '16px' }}>
             <IonFabButton onClick={() => setShowActionSheet(true)} color="secondary">
                 <IonIcon icon={add} />
@@ -111,16 +122,14 @@ export const ActsListPage: React.FC = () => {
         />
         
         <IonToast isOpen={showToast} message="Отправлено!" duration={2000} color="success" onDidDismiss={() => setShowToast(false)}/>
+        <IonToast isOpen={!!errorToast} message={errorToast || ''} duration={2600} color="danger" onDidDismiss={() => setErrorToast(null)} />
         
-        {/* КНОПКА ОТПРАВИТЬ (ПОДНЯТА НА 120px) */}
-        <div style={{
-            position: 'fixed', bottom: '120px', left: '16px', right: '16px', zIndex: 999
-        }}>
+        <div style={{ position: 'fixed', bottom: '120px', left: '16px', right: '16px', zIndex: 999 }}>
             {!isSent ? (
                 <IonButton 
                     expand="block" 
                     color="primary" 
-                    disabled={!hasActs} 
+                    disabled={!hasActs || sending || loading} 
                     onClick={handleSendAll}
                     style={{
                         height: '56px', fontWeight: 'bold', 
@@ -128,8 +137,8 @@ export const ActsListPage: React.FC = () => {
                         '--box-shadow': '0 8px 20px rgba(49, 130, 206, 0.4)'
                     }}
                 >
-                    <IonIcon icon={sendOutline} slot="start" />
-                    Отправить акты
+                    {sending ? <IonSpinner slot="start" /> : <IonIcon icon={sendOutline} slot="start" />}
+                    {sending ? 'Отправляем…' : 'Отправить акты'}
                 </IonButton>
             ) : (
                 <IonButton 

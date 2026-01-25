@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useHistory } from 'react-router-dom';
 import { 
   IonPage, IonContent, IonHeader, IonToolbar, IonTitle, 
   IonSearchbar, IonList, IonItem, IonLabel, IonIcon, IonSpinner, 
@@ -13,10 +14,12 @@ import {
 import { useAuthStore } from '../../store/authStore';
 import { useLicsSearchStore } from '../../store/licsSearchStore';
 import { useLicsStore } from '../../store/licsStore';
+import { formatAddress } from '../../utils/licsFormat';
 import './LicsListPage.css';
 
 export const LicsListPage: React.FC = () => {
   const token = useAuthStore(s => s.token);
+  const history = useHistory();
   const { list: myLics, loading: myLoading, fetchLics, addLicToUser, deleteLicFromUser } = useLicsStore();
   const searchStore = useLicsSearchStore();
 
@@ -197,7 +200,7 @@ export const LicsListPage: React.FC = () => {
   }
 
   // ----------------------------------------------------
-  // ГЛАВНЫЙ СПИСОК (БЕЗ ИЗМЕНЕНИЙ)
+  // ГЛАВНЫЙ СПИСОК
   // ----------------------------------------------------
   return (
     <IonPage className="lics-page">
@@ -223,18 +226,38 @@ export const LicsListPage: React.FC = () => {
 
             {myLics.map((lic) => {
                 const uniqueKey = lic.id || lic.code || lic.account || Math.random().toString();
+                const code = String(lic.account || lic.lic || lic.code || '').trim();
+                const address = formatAddress(lic.address_go ?? lic.address);
+
+                const openDetails = () => {
+                    if (!code) return;
+                    history.push(`/app/lics/${encodeURIComponent(code)}`);
+                };
+
                 return (
-                    <div key={uniqueKey} className="lic-card">
+                    <div
+                        key={uniqueKey}
+                        className="lic-card"
+                        onClick={openDetails}
+                        style={{ cursor: code ? 'pointer' : 'default' }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openDetails(); }}
+                    >
                         <div style={{display: 'flex', justifyContent: 'space-between'}}>
                             <div>
-                                <div className="lic-number">{lic.account || lic.lic || lic.code}</div>
-                                <div className="lic-fio">{lic.fio || lic.owner}</div>
+                                <div className="lic-number">{code || '—'}</div>
+                                <div className="lic-fio">{lic.fio || lic.owner || lic.name || 'ФИО не указано'}</div>
                             </div>
-                            <IonButton fill="clear" color="danger" onClick={() => handleDelete(lic)}>
+                            <IonButton
+                                fill="clear"
+                                color="danger"
+                                onClick={(e) => { e.stopPropagation(); handleDelete(lic); }}
+                            >
                                 <IonIcon slot="icon-only" icon={trashOutline} />
                             </IonButton>
                         </div>
-                        {lic.address && <div className="lic-address">{lic.address}</div>}
+                        {!!address && <div className="lic-address">{address}</div>}
                     </div>
                 );
             })}

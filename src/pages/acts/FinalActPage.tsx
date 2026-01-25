@@ -19,29 +19,28 @@ export const FinalActPage: React.FC = () => {
   const token = useAuthStore(s => s.token);
   
   const { saveAct, clearCurrentAct } = useActsStore();
-  const invoiceFromStore = useInvoiceStore(s => s.list.find(i => i.id === id));
+  // id в сторе может быть number, а из URL — string
+  const invoiceFromStore = useInvoiceStore(s => s.list.find(i => String(i.id) === String(id)));
   
   const [fetchedInvoice, setFetchedInvoice] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [errorToast, setErrorToast] = useState<string | null>(null);
 
-  // Используем новый шаблон actfinal
-  const template = ACT_TEMPLATES['actfinal']; 
+  const template = ACT_TEMPLATES['work_completed']; 
 
-  // Сброс при входе
   useEffect(() => {
     clearCurrentAct();
   }, []);
 
-  // Грузим заявку
   useEffect(() => {
     const hasData = invoiceFromStore || fetchedInvoice;
     if (!hasData && token && id) {
         setLoading(true);
         invoicesApi.fetchAll(token).then(data => {
             if (Array.isArray(data)) {
-                const found = data.find((i:any) => i.id === id);
+                const found = data.find((i:any) => String(i.id) === String(id));
                 if(found) setFetchedInvoice(found);
             }
         }).finally(() => setLoading(false));
@@ -53,14 +52,13 @@ export const FinalActPage: React.FC = () => {
       return raw ? normalizeInvoice(raw) : null;
   }, [invoiceFromStore, fetchedInvoice]);
 
-  // АВТОЗАПОЛНЕНИЕ
   const initialData = useMemo(() => {
       if (!cleanInvoice) return null;
 
       return {
           act_number: `FIN-${cleanInvoice.number}`,
           act_date: new Date().toISOString().split('T')[0],
-          type: 'actfinal', // ПРОВЕРЬ: Если сервер ругается, замени 'actfinal' на 'actbr' для теста
+          type: 'work_completed',
           
           lic: cleanInvoice.lic || '',
           owner_name: cleanInvoice.client_name || '',
@@ -68,42 +66,75 @@ export const FinalActPage: React.FC = () => {
           object_address: cleanInvoice.addressText || '',
           
           work_description: cleanInvoice.service || 'Работы выполнены в полном объеме',
-          amount: 0, // Дефолтное значение для числа
+          amount: 0,
+          warranty: '12',
           
           technician_name: 'Слесарь СТГО',
+          technician_signature: '',
+          owner_signature: '',
+          photo_result: ''
       };
   }, [cleanInvoice]);
 
+  const normalizeActNumber = (n: any) => {
+    const s = String(n || '').trim();
+    // FIN-000073930 -> 000073930
+    return s.startsWith('FIN-') ? s.slice(4) : s;
+  };
+
+  const cleanDataUrl = (v: any) => {
+    if (typeof v !== 'string') return '';
+    const s = v.trim();
+    return s.startsWith('data:') && s.length > 32 ? s : '';
+  };
+
   const handleSave = async (data: any) => {
     if (!token) return;
-    
-    // Формируем payload
-    const payload = { 
-        ...data, 
-        invoice_id: id, 
-        type: 'actfinal', 
-        details: data 
+
+    const cleanSignature = (sig: any) => cleanDataUrl(sig);
+
+    const payload = {
+        invoice_id: id,
+        type: 'work_completed',
+        
+        act_number: normalizeActNumber(data.act_number),
+        act_date: data.act_date,
+
+        // важно для SQL NOT NULL
+        status: 'draft',
+        
+        executor_name: data.technician_name || "Не указан",
+        executor_position: 'Слесарь', 
+        executor_signature: cleanSignature(data.technician_signature),
+
+        client_name: data.owner_name || "Не указан",
+        address: data.object_address || "",
+        client_signature: cleanSignature(data.owner_signature),
+        
+        work_description: data.work_description || "",
+        amount: Number(data.amount) || 0,
+        warranty: String(data.warranty || ""),
+        photo_result: cleanSignature(data.photo_result),
+        
+        notes: '',
+        quality_assessment: 'Удовлетворительно',
+
+        // совместимость
+        lic: data.lic,
+        owner_name: data.owner_name,
+        technician_name: data.technician_name
     };
 
-    console.log("SENDING PAYLOAD:", payload);
+    console.log("🚀 Sending FLAT Payload:", payload);
 
     try {
         const result = await saveAct(token, payload);
-        
-        // Проверяем результат
-        if (result && result.id) {
-            console.log("Saved success:", result);
-            setIsSaved(true);
-            setShowToast(true);
-        } else {
-            console.error("Save failed, result is empty:", result);
-            // Если saveAct вернул null, значит в ActsApi/Store ошибка поймана, но не проброшена.
-            // Нужно смотреть Network Tab в браузере -> XHR -> запрос 'acts'.
-            alert('Ошибка сохранения! Сервер не вернул ID акта. Проверьте консоль Network.');
-        }
+        console.log("✅ Saved success:", result);
+        setIsSaved(true);
+        setShowToast(true);
     } catch (e: any) {
-        console.error("Save Error:", e);
-        alert(`Ошибка при сохранении: ${e.message || 'Неизвестная ошибка'}`);
+        console.error("❌ Save Exception:", e);
+        setErrorToast(e?.message || 'Не удалось сохранить акт');
     }
   };
 
@@ -121,7 +152,7 @@ export const FinalActPage: React.FC = () => {
       }
   };
 
-  const isPageLoading = (loading && !initialData) || !template;
+  const showForm = !loading && template && initialData;
 
   return (
     <IonPage>
@@ -133,19 +164,33 @@ export const FinalActPage: React.FC = () => {
       </IonHeader>
       
       <IonContent fullscreen style={{'--background': '#f7fafc'}}>
-         {isPageLoading ? (
+         {loading && (
              <div className="ion-padding ion-text-center" style={{marginTop: '50px'}}>
                  <IonSpinner />
-                 <p>Загрузка данных...</p>
+                 <p style={{color: '#888'}}>Загрузка...</p>
              </div>
-         ) : (
+         )}
+
+         {!loading && !template && (
+             <div className="ion-padding ion-text-center" style={{marginTop: '20px', color: 'red'}}>
+                 Ошибка: Шаблон 'work_completed' не найден.
+             </div>
+         )}
+
+         {showForm && (
              <div style={{padding: '16px', paddingBottom: '120px'}}>
                  <GenericForm 
                     key="final-act-form"
                     template={template} 
-                    initialData={initialData || {}} 
+                    initialData={initialData} 
                     onSave={handleSave} 
                  />
+             </div>
+         )}
+
+         {!loading && template && !initialData && (
+             <div className="ion-padding ion-text-center" style={{marginTop: '20px', color: '#666'}}>
+                Заявка не найдена. Вернитесь назад и откройте акты заново.
              </div>
          )}
 
@@ -162,6 +207,7 @@ export const FinalActPage: React.FC = () => {
          )}
 
          <IonToast isOpen={showToast} message="Акт сохранен! Теперь закройте заявку." duration={3000} onDidDismiss={() => setShowToast(false)} color="primary"/>
+         <IonToast isOpen={!!errorToast} message={errorToast || ''} duration={3500} onDidDismiss={() => setErrorToast(null)} color="danger"/>
       </IonContent>
     </IonPage>
   );
