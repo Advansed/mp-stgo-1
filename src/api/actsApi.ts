@@ -12,6 +12,11 @@ export const actsApi = {
     return await post(API_METHODS.GET_ACT, { token, invoice_id: invoiceId, act_id: actId });
   },
 
+  // ✅ Получить/создать черновик акта по типу (сервер сам выдаст act_number)
+  getByType: async (token: string, invoiceId: string, actType: string) => {
+    return await post(API_METHODS.GET_ACT, { token, invoice_id: invoiceId, act_type: actType });
+  },
+
   // Создать/Обновить акт
   save: async (token: string, actData: any) => {
     return await post(API_METHODS.SET_ACT, { token, ...actData });

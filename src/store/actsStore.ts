@@ -56,16 +56,19 @@ interface ActsState {
   list: any[];
   currentAct: any | null;
   loading: boolean;
-  
+
   loadActs: (token: string, invoiceId: string) => Promise<void>;
   loadActDetails: (token: string, invoiceId: string, actId: string) => Promise<void>;
-  
+
+  /** Получить/создать черновик акта по типу (сервер сам выдаёт act_number) */
+  loadActDraft: (token: string, invoiceId: string, actType: string) => Promise<any | null>;
+
   // вернет объект акта или кинет ошибку
   saveAct: (token: string, actData: any) => Promise<any>;
 
   // «Отправить акты» — ставим status signed всем актам по заявке
   sendAllActs: (token: string, invoiceId: string) => Promise<void>;
-  
+
   clearCurrentAct: () => void;
   setCurrentAct: (act: any) => void;
 }
@@ -95,18 +98,35 @@ export const useActsStore = create<ActsState>((set, get) => ({
     }
   },
 
+  loadActDraft: async (token, invoiceId, actType) => {
+    set({ loading: true, currentAct: null });
+    try {
+      const res = await actsApi.getByType(token, invoiceId, actType);
+      if (res.success) {
+        set({ currentAct: res.data, loading: false });
+        return res.data;
+      }
+      set({ loading: false });
+      return null;
+    } catch (e) {
+      console.error(e);
+      set({ loading: false });
+      return null;
+    }
+  },
+
   saveAct: async (token, actData) => {
     set({ loading: true });
     try {
       const payload = normalizeActPayload(actData);
       const res = await actsApi.save(token, payload);
-      
+
       if (res.success) {
         const savedAct = res.data || payload;
-        
+
         const list = get().list;
-        const idx = list.findIndex(a => a.id === savedAct.id);
-        
+        const idx = list.findIndex((a) => a.id === savedAct.id);
+
         let newList: any[] = [];
         if (idx >= 0) {
           newList = [...list];
@@ -163,5 +183,5 @@ export const useActsStore = create<ActsState>((set, get) => ({
   },
 
   clearCurrentAct: () => set({ currentAct: null }),
-  setCurrentAct: (act) => set({ currentAct: act })
+  setCurrentAct: (act) => set({ currentAct: act }),
 }));
