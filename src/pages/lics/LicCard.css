@@ -1,0 +1,87 @@
+/* === КАРТОЧКА ЛИЦЕВОГО СЧЕТА === */
+.lic-card {
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  margin: 0 0 16px 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  position: relative;
+  overflow: hidden;
+  color: #1f2937;
+  transition: transform 0.1s ease;
+}
+
+.lic-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  background: #2563eb;
+}
+
+.lic-card--clickable {
+  cursor: pointer;
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.lic-card--clickable:active {
+  transform: scale(0.98);
+}
+
+.lic-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.lic-card__info {
+  min-width: 0;
+}
+
+.lic-card__number {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+
+.lic-card__fio {
+  font-size: 14px;
+  color: #4b5563;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.lic-card__fio-icon {
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.lic-card__address {
+  font-size: 12px;
+  color: #6b7280;
+  background: #f9fafb;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.lic-card__delete {
+  margin: -8px -8px 0 0;
+  flex-shrink: 0;
+}
+
+/* Кнопка «Уже добавлен» внутри карточки */
+.lic-card ion-button[disabled] {
+  opacity: 0.8;
+  --background: #f0fdf4 !important;
+  --color: #166534 !important;
+  --border-color: #bbf7d0 !important;
+}

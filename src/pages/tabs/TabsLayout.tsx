@@ -3,7 +3,6 @@ import { Redirect, Route } from 'react-router-dom';
 import { IonTabs, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/react';
 import { documentsOutline, walletOutline, settingsOutline } from 'ionicons/icons';
 
-// Импорты страниц
 import { InvoicesListPage } from '../invoices/InvoicesListPage';
 import { InvoiceDetailsPage } from '../invoices/InvoiceDetailsPage';
 import { InvoiceAddressPage } from '../invoices/InvoiceAddressPage';
@@ -13,7 +12,6 @@ import { ActEditPage } from '../acts/ActEditPage';
 import { ActsListPage } from '../acts/ActsListPage';
 import { ActPdfViewerPage } from '../acts/ActPdfViewerPage';
 import { LicDetailsPage } from '../lics/LicDetailsPage';
-import { FinalActPage } from '../acts/FinalActPage';
 
 import '../../theme/floating-tab.css';
 
@@ -21,15 +19,9 @@ export const TabsLayout: React.FC = () => {
   return (
     <IonTabs>
       <IonRouterOutlet>
-        {/* === АКТЫ === */}
         <Route exact path="/app/invoices/:id/acts/:actId/edit" component={ActEditPage} />
         <Route exact path="/app/invoices/:id/acts/new/:type" component={ActEditPage} />
         <Route exact path="/app/invoices/:id/acts/:actId/pdf" component={ActPdfViewerPage} />
-
-        {/* ФИНАЛЬНЫЙ АКТ */}
-        <Route exact path="/app/invoices/:id/final-act" component={FinalActPage} />
-        
-        {/* СПИСОК АКТОВ */}
         <Route exact path="/app/invoices/:id/acts" component={ActsListPage} />
 
         {/* === ЗАЯВКИ === */}

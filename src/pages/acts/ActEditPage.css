@@ -1,0 +1,50 @@
+.actEditToolbar {
+  --background: #f7fafc;
+}
+
+.actEditTitle {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.actEditBody {
+  padding: 0;
+  padding-bottom: 24px;
+}
+
+.actEditWcWrap {
+  padding: 0;
+  padding-bottom: 180px;
+}
+
+.actEditFab {
+  position: fixed;
+  bottom: 100px;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+.actEditFab ion-button {
+  --background: #3182ce;
+  --border-radius: 14px;
+  --box-shadow: 0 4px 12px rgba(49, 130, 206, 0.4);
+  height: 56px;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.actEditEmptyCard {
+  background: white;
+  padding: 16px;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.actEditEmptyHint {
+  margin-top: 8px;
+  color: #718096;
+  font-size: 14px;
+}

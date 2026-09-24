@@ -1,15 +1,18 @@
 import { post } from './http';
 import { API_METHODS } from './endpoints';
+import type { Lic } from '../domain/types';
 
-// ✅ Логика как раньше: add_lic должен уметь отправлять lc + id
-// Чтобы не ломать существующий код, addLic принимает (token, payload),
-// где payload может быть string (lc) или объект {code/account/lic + id}
 export const licsApi = {
+  
   getLics: async (token: string) => {
-    return await post(API_METHODS.GET_LICS, { token });
+    return await post<Lic[]>(API_METHODS.GET_LICS, { token });
   },
 
-  addLic: async (token: string, payload: any) => {
+  getLic: async (token: string, lc: string) => {
+    return await post<Lic | Lic[]>(API_METHODS.GET_LIC, { token, lc });
+  },
+
+  addLic: async (token: string, payload: Lic | string) => {
     // payload может быть строкой (код ЛС) или объектом
     const lc = typeof payload === 'string'
       ? payload
@@ -31,8 +34,8 @@ export const licsApi = {
     return await post(API_METHODS.ADD_LIC, body);
   },
 
-  // camelCase метод, как просили
   deleteLic: async (token: string, code: string) => {
     return await post(API_METHODS.DELETE_LIC, { token, lc: code });
   }
+
 };

@@ -21,6 +21,5 @@ export type ActFieldConfig = {
 export type ActTemplateConfig = {
   type: string;
   name: string;
-  htmlTemplate: string;
-  fields: ActFieldConfig[];
+  fields?: ActFieldConfig[];
 };

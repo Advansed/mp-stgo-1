@@ -2,13 +2,21 @@
 import { create } from 'zustand';
 import { invoicesApi } from '../api/invoicesApi';
 import { normalizeInvoice } from '../domain/normalizers';
+import type { Invoice } from '../domain/types';
 
 interface InvoiceState {
-  list: any[];
+  list: Invoice[];
   loading: boolean;
-  
+
   loadInvoices: (token: string) => Promise<void>;
+  ensureById: (token: string, id: string) => Promise<Invoice | null>;
   updateInvoiceAddress: (token: string, id: string, newAddress: string) => Promise<boolean>;
+  setInvoiceStatus: (
+    token: string,
+    id: string,
+    status: string,
+    completeText?: string
+  ) => Promise<{ success: boolean; message?: string }>;
 }
 
 export const useInvoiceStore = create<InvoiceState>((set, get) => ({
@@ -25,6 +33,13 @@ export const useInvoiceStore = create<InvoiceState>((set, get) => ({
     } finally {
       set({ loading: false });
     }
+  },
+
+  ensureById: async (token, id) => {
+    const found = get().list.find((inv) => String(inv.id) === String(id));
+    if (found) return found;
+    await get().loadInvoices(token);
+    return get().list.find((inv) => String(inv.id) === String(id)) || null;
   },
 
   updateInvoiceAddress: async (token, id, newAddress) => {
@@ -50,5 +65,29 @@ export const useInvoiceStore = create<InvoiceState>((set, get) => ({
       return false;
     }
     return true;
-  }
+  },
+
+  setInvoiceStatus: async (token, id, status, completeText) => {
+    const originalList = get().list;
+    const complete_date = new Date().toISOString().split('T')[0];
+    const complete_text = (completeText ?? status).trim() || status;
+
+    set((state) => ({
+      list: state.list.map((inv) =>
+        inv.id === id
+          ? normalizeInvoice({ ...inv, status, complete_text, complete_date })
+          : inv
+      ),
+    }));
+
+    const res = await invoicesApi.setStatus(token, id, status, complete_text);
+    if (!res.success) {
+      set({ list: originalList });
+      return {
+        success: false,
+        message: res.message || res.description || 'Не удалось изменить статус',
+      };
+    }
+    return { success: true };
+  },
 }));

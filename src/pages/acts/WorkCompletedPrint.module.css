@@ -1,0 +1,31 @@
+/* Скрытый iframe для предпросмотра / печати из родителя (по ref) */
+.hiddenFrame {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  left: -2000px;
+  top: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Видимый предпросмотр (если передать className) */
+.previewFrame {
+  width: 95%;
+  height: 80vh;
+  min-height: 0;
+  display: block;
+  margin: 0 auto;
+  border: 1px solid var(--ion-color-medium-tint, #ccc);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.modalContent {
+  padding: 0;
+}
+
+.modalActions {
+  padding: 0 12px 18px;
+}

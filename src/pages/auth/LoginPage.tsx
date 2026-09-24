@@ -12,15 +12,37 @@ import {
 } from '@ionic/react';
 import { personOutline, lockClosedOutline, eyeOutline, eyeOffOutline, logInOutline } from 'ionicons/icons';
 import { post } from '../../api/http';
+import { API_METHODS } from '../../api/endpoints';
 import { useAuthStore } from '../../store/authStore';
 import './LoginPage.css';
+
+const CREDENTIALS_KEY = 'mp-stgo-credentials';
+
+function loadSavedCredentials(): { login: string; password: string } {
+  try {
+    const raw = localStorage.getItem(CREDENTIALS_KEY);
+    if (!raw) return { login: '', password: '' };
+    const parsed = JSON.parse(raw);
+    return {
+      login: typeof parsed?.login === 'string' ? parsed.login : '',
+      password: typeof parsed?.password === 'string' ? parsed.password : '',
+    };
+  } catch {
+    return { login: '', password: '' };
+  }
+}
+
+function saveCredentials(login: string, password: string) {
+  localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({ login, password }));
+}
 
 export const LoginPage: React.FC = () => {
   const history = useHistory();
   const setAuth = useAuthStore((s) => s.setAuth);
 
-  const [login, setLogin] = useState('');
-  const [password, setPassword] = useState('');
+  const saved = loadSavedCredentials();
+  const [login, setLogin] = useState(saved.login);
+  const [password, setPassword] = useState(saved.password);
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -36,14 +58,14 @@ export const LoginPage: React.FC = () => {
   setErrorMsg(null);
 
   try {
-    const res: any = await post('login', { login: login.trim(), password });
+    const res: any = await post(API_METHODS.LOGIN, { login: login.trim(), password });
 
     // поддержим оба варианта, чтобы не гадать
     const token = res?.data?.token ?? res?.token;
     const success = res?.success === true || !!token;
 
     if (success && token) {
-      // сохраняем так же, как в проекте принято
+      saveCredentials(login.trim(), password);
       setAuth(token, res?.data ?? res);
       history.replace('/app/invoices');
     } else {

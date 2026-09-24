@@ -1,28 +1,42 @@
-import { USD_LOGO_BASE64 } from '../../../constants/logo';
+import { normalizeAddress as formatAddress } from '../../../utils/formatters';
+
+const MONTHS_GEN = [
+  'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+  'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря',
+];
 
 const formatDateSmart = (value?: string) => {
-  if (!value) return { full: '___', short: '__.__', year: '____' };
+  const empty = { full: '___', short: '__.__', year: '____', day: '__', monthName: '____________' };
+  if (!value) return empty;
   const s = String(value).trim();
+
+  const pack = (y: string, mm: string, dd: string) => ({
+    full: `${dd}.${mm}.${y}`,
+    short: `${dd}.${mm}`,
+    year: y,
+    day: dd,
+    monthName: MONTHS_GEN[Number(mm) - 1] || '____________',
+  });
 
   const m1 = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (m1) {
     const [, y, mm, dd] = m1;
-    return { full: `${dd}.${mm}.${y}`, short: `${dd}.${mm}`, year: y };
+    return pack(y, mm, dd);
   }
 
   const m2 = s.match(/^(\d{2})\.(\d{2})\.(\d{4})/);
   if (m2) {
     const [, dd, mm, y] = m2;
-    return { full: `${dd}.${mm}.${y}`, short: `${dd}.${mm}`, year: y };
+    return pack(y, mm, dd);
   }
 
   const m3 = s.match(/^(\d{2})\.(\d{2})/);
   if (m3) {
     const [, dd, mm] = m3;
-    return { full: `${dd}.${mm}.____`, short: `${dd}.${mm}`, year: '____' };
+    return { full: `${dd}.${mm}.____`, short: `${dd}.${mm}`, year: '____', day: dd, monthName: MONTHS_GEN[Number(mm) - 1] || '____________' };
   }
 
-  return { full: s, short: s, year: '____' };
+  return { ...empty, full: s, short: s };
 };
 
 const safeStr = (v: any, fallback = '________________') => {
@@ -48,27 +62,95 @@ const formatImg = (img: any, maxHeight = 220) => {
   return '';
 };
 
-const normalizeAddress = (value: any) => {
-  if (!value) return '________________';
-  if (typeof value === 'string') return safeStr(value);
-  if (typeof value === 'object') {
-    const parts = [
-      value?.city,
-      value?.street,
-      value?.house,
-      value?.flat,
-      value?.address,
-      value?.full,
-      value?.value,
-    ]
-      .filter(Boolean)
-      .map(String);
-    return parts.length ? parts.join(', ') : '________________';
-  }
-  return safeStr(value);
+const parseNum = (v: any): number | null => {
+  if (v === null || v === undefined || v === '') return null;
+  const n = Number(String(v).replace(/\s/g, '').replace(',', '.'));
+  return Number.isFinite(n) ? n : null;
 };
 
-export const fillActTemplate = (htmlTemplate: string, act: any) => {
+const formatMoney = (n: number | null): string => {
+  if (n === null) return '';
+  return n.toFixed(2).replace('.', ',');
+};
+
+const cell = (v: any): string => {
+  const s = v === null || v === undefined ? '' : String(v).trim();
+  return s;
+};
+
+const isDone = (v: any): boolean => {
+  const s = String(v ?? '').trim().toLowerCase();
+  return s === 'да' || s === 'yes' || s === 'true' || s === '1' || v === true;
+};
+
+const UNITS_M = ['', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'];
+const UNITS_F = ['', 'одна', 'две', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'];
+const TEENS = ['десять', 'одиннадцать', 'двенадцать', 'тринадцать', 'четырнадцать', 'пятнадцать', 'шестнадцать', 'семнадцать', 'восемнадцать', 'девятнадцать'];
+const TENS = ['', '', 'двадцать', 'тридцать', 'сорок', 'пятьдесят', 'шестьдесят', 'семьдесят', 'восемьдесят', 'девяносто'];
+const HUNDREDS = ['', 'сто', 'двести', 'триста', 'четыреста', 'пятьсот', 'шестьсот', 'семьсот', 'восемьсот', 'девятьсот'];
+
+const plural = (n: number, forms: [string, string, string]) => {
+  const n10 = n % 10;
+  const n100 = n % 100;
+  if (n10 === 1 && n100 !== 11) return forms[0];
+  if (n10 >= 2 && n10 <= 4 && (n100 < 10 || n100 >= 20)) return forms[1];
+  return forms[2];
+};
+
+const triadToWords = (n: number, gender: 'm' | 'f'): string => {
+  const units = gender === 'f' ? UNITS_F : UNITS_M;
+  const h = Math.floor(n / 100);
+  const t = Math.floor((n % 100) / 10);
+  const u = n % 10;
+  const parts: string[] = [];
+  if (h) parts.push(HUNDREDS[h]);
+  if (t === 1) {
+    parts.push(TEENS[u]);
+  } else {
+    if (t) parts.push(TENS[t]);
+    if (u) parts.push(units[u]);
+  }
+  return parts.join(' ');
+};
+
+const intToWords = (n: number, gender: 'm' | 'f'): string => {
+  if (n === 0) return gender === 'f' ? 'ноль' : 'ноль';
+  const parts: string[] = [];
+  const millions = Math.floor(n / 1_000_000);
+  const thousands = Math.floor((n % 1_000_000) / 1000);
+  const rest = n % 1000;
+  if (millions) {
+    parts.push(triadToWords(millions, 'm'), plural(millions, ['миллион', 'миллиона', 'миллионов']));
+  }
+  if (thousands) {
+    parts.push(triadToWords(thousands, 'f'), plural(thousands, ['тысяча', 'тысячи', 'тысяч']));
+  }
+  if (rest) parts.push(triadToWords(rest, gender));
+  return parts.filter(Boolean).join(' ');
+};
+
+const moneyToWords = (amount: number): string => {
+  const rub = Math.floor(Math.abs(amount));
+  const kop = Math.round((Math.abs(amount) - rub) * 100) % 100;
+  const rubWords = intToWords(rub, 'm') || 'ноль';
+  const capitalized = rubWords.charAt(0).toUpperCase() + rubWords.slice(1);
+  return `${capitalized} ${plural(rub, ['рубль', 'рубля', 'рублей'])} ${String(kop).padStart(2, '0')} ${plural(kop, ['копейка', 'копейки', 'копеек'])}`;
+};
+
+const parseActTime = (d: Record<string, any>) => {
+  const raw = String(d.act_time || '').trim();
+  const m = raw.match(/^(\d{1,2})[:.hHч\s]+(\d{2})/);
+  if (m) return { h: m[1].padStart(2, '0'), min: m[2] };
+  return {
+    h: String(d.act_time_h || '').trim() || '__',
+    min: String(d.act_time_m || '').trim() || '__',
+  };
+};
+
+const normalizeAddress = (value: any) => formatAddress(value) || '________________';
+
+export const fillActTemplate = async (htmlTemplate: string, act: any) => {
+  const { USD_LOGO_BASE64 } = await import('../../../constants/logo');
   const common = act || {};
   const d = common.details || {};
 
@@ -192,7 +274,60 @@ export const fillActTemplate = (htmlTemplate: string, act: any) => {
     '{{AAD_PERSONAL_ACCOUNT}}': safeStr(d.aad_personal_account || d.lic || personalAccount),
     '{{AAD_SUPPLIER_REP_FIO}}': safeStr(d.aad_supplier_rep_fio),
     '{{AAD_CUSTOMER_FIO}}': safeStr(d.aad_customer_fio || d.owner_name),
+
+    '{{ACT_DAY}}': actDate.day,
+    '{{ACT_MONTH_NAME}}': actDate.monthName,
   };
+
+  const toTime = parseActTime({ ...common, ...d });
+  const src = { ...common, ...d };
+  replacements['{{TO_TIME_H}}'] = toTime.h;
+  replacements['{{TO_TIME_M}}'] = toTime.min;
+  replacements['{{TO_REQUEST_KIND}}'] = safeStr(src.request_kind || src.request_type || '');
+  replacements['{{TO_REQUEST_TEXT}}'] = safeStr(src.request_text || src.service || '');
+  replacements['{{TO_PRICE_ORDER_NO}}'] = safeStr(src.price_order_number || '', '________');
+  replacements['{{TO_PRICE_ORDER_DATE}}'] = src.price_order_date
+    ? formatDateSmart(src.price_order_date).full
+    : '______________';
+  replacements['{{TO_NOTE}}'] = safeStr(src.note || src.warranty || '');
+  replacements['{{TO_HOUSE}}'] = cell(src.house || (typeof src.object_address === 'object' ? src.object_address?.house : ''));
+  replacements['{{TO_APT}}'] = cell(src.apartment || src.flat || (typeof src.object_address === 'object' ? src.object_address?.flat : ''));
+  replacements['{{TO_CONTRACT}}'] = safeStr(src.contract || '');
+  replacements['{{TO_EQ_BOILER_MARK}}'] = cell(src.eq_boiler_mark);
+  replacements['{{TO_EQ_BOILER_QTY}}'] = cell(src.eq_boiler_qty);
+  replacements['{{TO_EQ_STOVE_MARK}}'] = cell(src.eq_stove_mark);
+  replacements['{{TO_EQ_STOVE_QTY}}'] = cell(src.eq_stove_qty);
+  replacements['{{TO_EQ_CONV_MARK}}'] = cell(src.eq_convector_mark);
+  replacements['{{TO_EQ_CONV_QTY}}'] = cell(src.eq_convector_qty);
+  replacements['{{TO_EQ_PIPE_MARK}}'] = cell(src.eq_pipe_mark);
+  replacements['{{TO_EQ_PIPE_QTY}}'] = cell(src.eq_pipe_qty);
+  replacements['{{TO_EQ_OTHER_MARK}}'] = cell(src.eq_other_mark);
+  replacements['{{TO_EQ_OTHER_QTY}}'] = cell(src.eq_other_qty);
+
+  let toTotal = 0;
+  let toHasSum = false;
+  for (let i = 1; i <= 5; i++) {
+    const name = cell(src[`svc${i}_name`]);
+    const qty = parseNum(src[`svc${i}_qty`]);
+    const price = parseNum(src[`svc${i}_price`]);
+    const sum = name && qty !== null && price !== null ? qty * price : null;
+    if (sum !== null) {
+      toTotal += sum;
+      toHasSum = true;
+    }
+    replacements[`{{TO_SVC${i}_NAME}}`] = name;
+    replacements[`{{TO_SVC${i}_UNIT}}`] = name ? (cell(src[`svc${i}_unit`]) || 'операция') : '';
+    replacements[`{{TO_SVC${i}_QTY}}`] = qty === null ? '' : String(qty);
+    replacements[`{{TO_SVC${i}_PRICE}}`] = formatMoney(price);
+    replacements[`{{TO_SVC${i}_SUM}}`] = formatMoney(sum);
+    replacements[`{{TO_SVC${i}_DONE}}`] = name && isDone(src[`svc${i}_done`]) ? 'V' : '';
+  }
+  const toRub = Math.floor(toTotal);
+  const toKop = Math.round((toTotal - toRub) * 100) % 100;
+  replacements['{{TO_TOTAL}}'] = toHasSum ? formatMoney(toTotal) : '';
+  replacements['{{TO_TOTAL_RUB}}'] = toHasSum ? String(toRub) : '_____';
+  replacements['{{TO_TOTAL_KOP}}'] = toHasSum ? String(toKop).padStart(2, '0') : '____';
+  replacements['{{TO_TOTAL_WORDS}}'] = toHasSum ? moneyToWords(toTotal) : '';
 
   let html = htmlTemplate;
   for (const [key, value] of Object.entries(replacements)) {

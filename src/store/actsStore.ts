@@ -1,11 +1,9 @@
 import { create } from 'zustand';
 import { actsApi } from '../api/actsApi';
+import { toDetailsObject as toDetails } from '../domain/objects';
+import type { Act } from '../domain/types';
 
 type AnyObj = Record<string, any>;
-
-const isPlainObject = (v: any): v is AnyObj => {
-  return !!v && typeof v === 'object' && !Array.isArray(v);
-};
 
 const nowIso = () => new Date().toISOString();
 
@@ -24,24 +22,7 @@ const withoutDetails = (obj: AnyObj): AnyObj => {
   return rest;
 };
 
-const toDetailsObject = (details: any): AnyObj => {
-  if (!details) return {};
-  if (Array.isArray(details)) {
-    const firstObj = details.find((x) => isPlainObject(x));
-    return (firstObj as AnyObj) || {};
-  }
-  if (isPlainObject(details)) {
-    // Иногда сервер/клиент возвращает объект вида: { 0: {..поля..}, id, type, ... }
-    const maybe0 = (details as any)['0'];
-    if (isPlainObject(maybe0)) {
-      const rest: AnyObj = { ...(details as AnyObj) };
-      delete (rest as any)['0'];
-      return { ...(maybe0 as AnyObj), ...rest };
-    }
-    return details as AnyObj;
-  }
-  return {};
-};
+const toDetailsObject = (details: any): AnyObj => toDetails(details) as AnyObj;
 
 const META_KEYS = new Set([
   'id',
@@ -126,24 +107,16 @@ const normalizeActPayload = (actData: AnyObj): AnyObj => {
 };
 
 interface ActsState {
-  list: any[];
-  currentAct: any | null;
+  list: Act[];
+  currentAct: Act | null;
   loading: boolean;
 
   loadActs: (token: string, invoiceId: string) => Promise<void>;
   loadActDetails: (token: string, invoiceId: string, actId: string) => Promise<void>;
-
-  /** Получить/создать черновик акта по типу (сервер сам выдаёт act_number) */
-  loadActDraft: (token: string, invoiceId: string, actType: string) => Promise<any | null>;
-
-  // вернет объект акта или кинет ошибку
-  saveAct: (token: string, actData: any) => Promise<any>;
-
-  // «Отправить акты» — ставим status signed всем актам по заявке
-  sendAllActs: (token: string, invoiceId: string) => Promise<void>;
-
+  loadActDraft: (token: string, invoiceId: string, actType: string) => Promise<Act | null>;
+  saveAct: (token: string, actData: AnyObj) => Promise<Act>;
   clearCurrentAct: () => void;
-  setCurrentAct: (act: any) => void;
+  setCurrentAct: (act: Act) => void;
 }
 
 export const useActsStore = create<ActsState>((set, get) => ({
@@ -200,7 +173,7 @@ export const useActsStore = create<ActsState>((set, get) => ({
         const list = get().list;
         const idx = list.findIndex((a) => a.id === savedAct.id);
 
-        let newList: any[] = [];
+        let newList: Act[] = [];
         if (idx >= 0) {
           newList = [...list];
           newList[idx] = { ...newList[idx], ...savedAct };
@@ -213,45 +186,11 @@ export const useActsStore = create<ActsState>((set, get) => ({
       }
 
       set({ loading: false });
-      throw new Error(res.message || 'Не удалось сохранить акт');
+      throw new Error(res.description || res.message || 'Не удалось сохранить акт');
     } catch (e) {
       console.error(e);
       set({ loading: false });
       throw e;
-    }
-  },
-
-  sendAllActs: async (token, invoiceId) => {
-    set({ loading: true });
-    try {
-      const acts = get().list || [];
-      if (acts.length === 0) return;
-
-      for (const a of acts) {
-        const actId = a?.id;
-        if (!actId) continue;
-
-        // берем полный акт, если список вернул "шапку"
-        const fullRes = await actsApi.getById(token, invoiceId, String(actId));
-        const fullAct = fullRes.success ? (fullRes.data || a) : a;
-
-        const payload = normalizeActPayload({
-          ...fullAct,
-          invoice_id: invoiceId,
-          status: 'signed',
-        });
-
-        const saveRes = await actsApi.save(token, payload);
-        if (!saveRes.success) {
-          throw new Error(saveRes.message || 'Не удалось отправить акты');
-        }
-      }
-
-      // Перезагружаем список
-      const res = await actsApi.getByInvoice(token, invoiceId);
-      if (res.success) set({ list: res.data || [] });
-    } finally {
-      set({ loading: false });
     }
   },
 

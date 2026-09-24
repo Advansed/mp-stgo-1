@@ -2,9 +2,10 @@
 import { post } from './http';
 import { normalizeInvoice } from '../domain/normalizers';
 import { API_METHODS } from './endpoints';
+import type { Invoice } from '../domain/types';
 
 export const invoicesApi = {
-  fetchAll: async (token: string) => {
+  fetchAll: async (token: string): Promise<Invoice[]> => {
     const res = await post(API_METHODS.INVOICES, { token });
     if (res.success && Array.isArray(res.data)) {
       return res.data.map(normalizeInvoice);
@@ -13,30 +14,39 @@ export const invoicesApi = {
   },
 
   updateAddress: async (token: string, id: string, address: string) => {
-    
-    // Попытка 1: upd_inv_address (как было)
-    console.log(`Попытка 1: ${API_METHODS.UPDATE_ADDRESS_V1}`);
+    const looksMissing = (res: { success?: boolean; description?: string; message?: string }) =>
+      !res.success &&
+      ((res.description || res.message || '').includes('method') ||
+        (res.description || res.message || '').includes('404'));
+
     let res = await post(API_METHODS.UPDATE_ADDRESS_V1, { token, id, address });
-    
-    // Если сервер ругается на метод, пробуем вариант 2
-    if (!res.success && (res.message?.includes('method') || res.message?.includes('404'))) {
-        console.warn(`Метод ${API_METHODS.UPDATE_ADDRESS_V1} не найден. Пробуем ${API_METHODS.UPDATE_ADDRESS_V2}`);
-        res = await post(API_METHODS.UPDATE_ADDRESS_V2, { token, id, address });
+    if (looksMissing(res)) {
+      res = await post(API_METHODS.UPDATE_ADDRESS_V2, { token, id, address });
     }
-
-    // Если всё еще ошибка, пробуем вариант 3 (mp_set...)
-    if (!res.success && (res.message?.includes('method') || res.message?.includes('404'))) {
-        console.warn(`Метод ${API_METHODS.UPDATE_ADDRESS_V2} не найден. Пробуем ${API_METHODS.UPDATE_ADDRESS_V3}`);
-        res = await post(API_METHODS.UPDATE_ADDRESS_V3, { token, id, address });
+    if (looksMissing(res)) {
+      res = await post(API_METHODS.UPDATE_ADDRESS_V3, { token, id, address });
     }
-
     return res;
   },
 
-  // НОВЫЙ МЕТОД: Закрыть заявку
-  closeInvoice: async (token: string, id: string) => {
-      // Используем прямой путь, если в API_METHODS нет константы
-      const response = await post(`/invoices/${id}/close`, { token });
-      return response;
-  }
+  completeInvoice: async (token: string, id: string, completeText: string) => {
+    return invoicesApi.setStatus(token, id, 'Завершено', completeText);
+  },
+
+  setStatus: async (
+    token: string,
+    id: string,
+    status: string,
+    completeText?: string
+  ) => {
+    const complete_date = new Date().toISOString().split('T')[0];
+    const complete_text = (completeText ?? status).trim() || status;
+    return post(API_METHODS.SET_INV, {
+      token,
+      id,
+      status,
+      complete_date,
+      complete_text,
+    });
+  },
 };

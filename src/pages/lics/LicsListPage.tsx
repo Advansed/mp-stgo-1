@@ -1,20 +1,20 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
-import { 
-  IonPage, IonContent, IonHeader, IonToolbar, IonTitle, 
-  IonSearchbar, IonList, IonItem, IonLabel, IonIcon, IonSpinner, 
+import {
+  IonPage, IonContent, IonHeader, IonToolbar, IonTitle,
+  IonSearchbar, IonList, IonItem, IonLabel, IonIcon, IonSpinner,
   IonButtons, IonButton, IonChip, IonFab, IonFabButton, IonRefresher, IonRefresherContent,
   IonAlert
 } from '@ionic/react';
-import { 
-  walletOutline, locationOutline, homeOutline, 
-  businessOutline, arrowBackOutline, navigateOutline, 
-  layersOutline, add, trashOutline, checkmarkCircle 
+import {
+  walletOutline, locationOutline, homeOutline,
+  businessOutline, arrowBackOutline, navigateOutline, add
 } from 'ionicons/icons';
 import { useAuthStore } from '../../store/authStore';
 import { useLicsSearchStore } from '../../store/licsSearchStore';
 import { useLicsStore } from '../../store/licsStore';
-import { formatAddress } from '../../utils/licsFormat';
+import { getLicCode } from '../../utils/licsFormat';
+import { LicCard } from './LicCard';
 import './LicsListPage.css';
 
 export const LicsListPage: React.FC = () => {
@@ -26,10 +26,6 @@ export const LicsListPage: React.FC = () => {
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [query, setQuery] = useState('');
   const [alertInfo, setAlertInfo] = useState<{isOpen: boolean, header: string, msg: string}>({ isOpen: false, header: '', msg: '' });
-  
-  //  ИЗМЕНЕНИЕ: Вместо true/false храним КОД текущего счета
-  // null = ничего не добавляется
-  // '12345' = добавляется счет 12345
   const [addingCode, setAddingCode] = useState<string | null>(null);
 
   useEffect(() => {
@@ -59,22 +55,20 @@ export const LicsListPage: React.FC = () => {
   };
 
   const handleSelectLic = async (lic: any) => {
-     // Если что-то уже добавляется - выходим
      if(!token || addingCode !== null) return;
-     
+
      const licCode = lic.code || lic.account || lic.lic;
      if (!licCode) {
          setAlertInfo({ isOpen: true, header: 'Ошибка', msg: 'Некорректные данные' });
          return;
      }
 
-     setAddingCode(licCode); // Блокируем только этот код
-     
-     // Передаем ВЕСЬ объект
+     setAddingCode(licCode);
+
      const result = await addLicToUser(token, lic);
-     
-     setAddingCode(null); // Разблокируем
-     
+
+     setAddingCode(null);
+
      if (result.success) {
          setIsSearchMode(false);
          searchStore.resetSearch();
@@ -87,13 +81,13 @@ export const LicsListPage: React.FC = () => {
 
   const handleDelete = async (lic: any) => {
       if(!token) return;
-      const code = lic.code || lic.account || lic.lic;
+      const code = getLicCode(lic);
       await deleteLicFromUser(token, code);
   };
 
   const isAlreadyAdded = (lic: any) => {
-      const code = lic.code || lic.account || lic.lic;
-      return myLics.some(m => (m.code || m.account) === code);
+      const code = getLicCode(lic);
+      return myLics.some(m => getLicCode(m) === code);
   };
 
   // ----------------------------------------------------
@@ -111,7 +105,7 @@ export const LicsListPage: React.FC = () => {
               </IonButtons>
               <IonTitle>Поиск счета</IonTitle>
             </IonToolbar>
-            
+
             {searchStore.step !== 'settlement' && (
                 <div className="breadcrumbs-container">
                     {searchStore.selectedSettlement && <IonChip>{searchStore.selectedSettlement.settlement}</IonChip>}
@@ -119,7 +113,7 @@ export const LicsListPage: React.FC = () => {
                     {searchStore.selectedHouse && <IonChip>{searchStore.selectedHouse.house}</IonChip>}
                 </div>
             )}
-            
+
             {searchStore.step !== 'lics' && (
                 <IonToolbar color="light" style={{paddingBottom: 5}}>
                    <IonSearchbar value={query} onIonInput={e => setQuery(e.detail.value!)} placeholder="Поиск..." />
@@ -130,8 +124,7 @@ export const LicsListPage: React.FC = () => {
           <IonContent fullscreen>
              {searchStore.loading && <div className="ion-text-center ion-padding"><IonSpinner /></div>}
 
-             <IonList lines="none" style={{background: 'transparent', padding: 16}}>
-                {/* СПИСОК НАСЕЛЕННЫХ ПУНКТОВ / УЛИЦ / ДОМОВ */}
+             <IonList lines="none" className="lics-search-list">
                 {searchStore.step !== 'lics' && filteredSearchItems.map((item: any, idx) => (
                     <IonItem key={`${item.type}-${idx}`} button onClick={() => handleItemClick(item)} className="result-item" detail={false}>
                         <div className="item-icon-wrapper">
@@ -141,54 +134,34 @@ export const LicsListPage: React.FC = () => {
                             <h2>{item.settlement || item.street || item.house || item.apartment}</h2>
                             <p>{item.ulus || 'Выбрать'}</p>
                         </IonLabel>
-                        <IonIcon icon={navigateOutline} slot="end" color="medium" style={{opacity: 0.3}} />
+                        <IonIcon icon={navigateOutline} slot="end" color="medium" className="result-item-nav" />
                     </IonItem>
                 ))}
 
-                {/* СПИСОК ЛИЦЕВЫХ СЧЕТОВ (ФИНАЛ) */}
                 {searchStore.step === 'lics' && filteredSearchItems.map((lic: any) => {
-                    // Данные счета
-                    const code = lic.code || lic.account || lic.lic;
+                    const code = getLicCode(lic);
                     const key = lic.id || code || Math.random().toString();
-                    const added = isAlreadyAdded(lic);
-                    
-                    // Проверка: крутится ли ЭТОТ КОНКРЕТНЫЙ счет?
-                    const isThisLoading = addingCode === code;
-                    
+
                     return (
-                        <div key={key} className="lic-card">
-                             <div className="lic-number">{code}</div>
-                             <div className="lic-fio">
-                                <IonIcon icon={layersOutline} style={{marginRight: 6}}/>
-                                {lic.fio || lic.owner || 'ФИО не указано'}
-                             </div>
-                             
-                             {added ? (
-                                 <IonButton expand="block" color="success" fill="outline" disabled>
-                                     <IonIcon icon={checkmarkCircle} slot="start" />
-                                     Уже добавлен
-                                 </IonButton>
-                             ) : (
-                                 <IonButton 
-                                    expand="block" 
-                                    onClick={() => handleSelectLic(lic)}
-                                    // Блокируем, если ЧТО-ТО добавляется (неважно что)
-                                    disabled={addingCode !== null} 
-                                 >
-                                     {isThisLoading ? <IonSpinner name="crescent" /> : 'Добавить этот счет'}
-                                 </IonButton>
-                             )}
-                        </div>
+                        <LicCard
+                            key={key}
+                            mode="search"
+                            lic={lic}
+                            added={isAlreadyAdded(lic)}
+                            loading={addingCode === code}
+                            disabled={addingCode !== null}
+                            onAdd={() => handleSelectLic(lic)}
+                        />
                     );
                 })}
 
                 {!searchStore.loading && filteredSearchItems.length === 0 && (
-                    <div className="ion-text-center ion-padding" style={{color: '#999'}}>Ничего не найдено</div>
+                    <div className="lics-empty-hint">Ничего не найдено</div>
                 )}
              </IonList>
-             
-             <IonAlert 
-                isOpen={alertInfo.isOpen} 
+
+             <IonAlert
+                isOpen={alertInfo.isOpen}
                 onDidDismiss={() => setAlertInfo({...alertInfo, isOpen: false})}
                 header={alertInfo.header}
                 message={alertInfo.msg}
@@ -205,65 +178,46 @@ export const LicsListPage: React.FC = () => {
   return (
     <IonPage className="lics-page">
       <IonHeader className="ion-no-border">
-        <IonToolbar color="light"><IonTitle style={{fontWeight: 700}}>Лицевые счета</IonTitle></IonToolbar>
+        <IonToolbar color="light"><IonTitle className="lics-page-title">Лицевые счета</IonTitle></IonToolbar>
       </IonHeader>
 
-      <IonContent fullscreen>
+      <IonContent fullscreen scrollY>
         <IonRefresher slot="fixed" onIonRefresh={e => { if(token) fetchLics(token); e.detail.complete(); }}>
             <IonRefresherContent />
         </IonRefresher>
 
-        <div style={{padding: 16}}>
-            {myLoading && <div className="ion-text-center"><IonSpinner /></div>}
-            
+        <div className="lics-list">
+            {myLoading && myLics.length === 0 && (
+              <div className="ion-text-center"><IonSpinner /></div>
+            )}
+
             {!myLoading && myLics.length === 0 && (
-                <div style={{textAlign: 'center', marginTop: 100, color: '#666'}}>
-                    <IonIcon icon={walletOutline} style={{fontSize: 48, opacity: 0.3}} />
+                <div className="lics-empty">
+                    <IonIcon icon={walletOutline} className="lics-empty-icon" />
                     <h3>Список пуст</h3>
                     <p>Нажмите + чтобы добавить счет</p>
                 </div>
             )}
 
             {myLics.map((lic) => {
-                const uniqueKey = lic.id || lic.code || lic.account || Math.random().toString();
-                const code = String(lic.account || lic.lic || lic.code || '').trim();
-                const address = formatAddress(lic.address_go ?? lic.address);
-
-                const openDetails = () => {
-                    if (!code) return;
-                    history.push(`/app/lics/${encodeURIComponent(code)}`);
-                };
+                const code = getLicCode(lic);
+                const uniqueKey = String(lic.id || code);
 
                 return (
-                    <div
+                    <LicCard
                         key={uniqueKey}
-                        className="lic-card"
-                        onClick={openDetails}
-                        style={{ cursor: code ? 'pointer' : 'default' }}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openDetails(); }}
-                    >
-                        <div style={{display: 'flex', justifyContent: 'space-between'}}>
-                            <div>
-                                <div className="lic-number">{code || '—'}</div>
-                                <div className="lic-fio">{lic.fio || lic.owner || lic.name || 'ФИО не указано'}</div>
-                            </div>
-                            <IonButton
-                                fill="clear"
-                                color="danger"
-                                onClick={(e) => { e.stopPropagation(); handleDelete(lic); }}
-                            >
-                                <IonIcon slot="icon-only" icon={trashOutline} />
-                            </IonButton>
-                        </div>
-                        {!!address && <div className="lic-address">{address}</div>}
-                    </div>
+                        lic={lic}
+                        onOpen={() => {
+                            if (!code) return;
+                            history.push(`/app/lics/${encodeURIComponent(code)}`);
+                        }}
+                        onDelete={() => handleDelete(lic)}
+                    />
                 );
             })}
         </div>
 
-        <IonFab vertical="bottom" horizontal="end" slot="fixed" style={{ marginBottom: 90, marginRight: 16 }}>
+        <IonFab vertical="bottom" horizontal="end" slot="fixed" className="lics-fab">
             <IonFabButton onClick={() => { setIsSearchMode(true); if(token) searchStore.loadSettlements(token); }} className="corporate-fab-button">
                 <IonIcon icon={add} />
             </IonFabButton>
@@ -271,4 +225,5 @@ export const LicsListPage: React.FC = () => {
       </IonContent>
     </IonPage>
   );
+
 };

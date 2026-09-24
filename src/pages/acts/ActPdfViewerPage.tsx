@@ -1,18 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useHistory } from 'react-router-dom';
-import { 
-  IonPage, IonContent, IonHeader, IonToolbar, IonTitle, 
-  IonButtons, IonButton, IonIcon, IonSpinner, IonBackButton 
+import { useParams } from 'react-router-dom';
+import {
+  IonPage, IonContent, IonHeader, IonToolbar, IonTitle,
+  IonButtons, IonSpinner, IonBackButton
 } from '@ionic/react';
-import { closeOutline, shareOutline, downloadOutline } from 'ionicons/icons';
 import { useActsStore } from '../../store/actsStore';
 import { useAuthStore } from '../../store/authStore';
 import { actsApi } from '../../api/actsApi';
 import { ACT_TEMPLATES } from '../../features/acts/configs/registry';
-import { fillActTemplate } from '../../features/acts/utils/templateEngine';
+import { loadActHtmlTemplate } from '../../features/acts/configs/loadActHtmlTemplate';
 
 export const ActPdfViewerPage: React.FC = () => {
-  const { id, actId } = useParams<{ id: string, actId: string }>();
+  const { id } = useParams<{ id: string; actId: string }>();
   const token = useAuthStore(s => s.token);
   const { currentAct } = useActsStore();
   
@@ -29,17 +28,21 @@ export const ActPdfViewerPage: React.FC = () => {
       }
 
       // 1. Берем шаблон
-      const templateConfig = ACT_TEMPLATES[currentAct.type];
+      const actType = String(currentAct.type || '');
+      const templateConfig = ACT_TEMPLATES[actType];
       if (!templateConfig) {
         setError('Неизвестный шаблон');
+        setLoading(false);
         return;
       }
 
-      // 2. Заполняем HTML данными
-      const filledHtml = fillActTemplate(templateConfig.htmlTemplate, currentAct);
-
-      // 3. Отправляем на сервер (mp_get_pdf)
       try {
+        const [{ fillActTemplate }, htmlTemplate] = await Promise.all([
+          import('../../features/acts/utils/templateEngine'),
+          loadActHtmlTemplate(actType),
+        ]);
+        const filledHtml = await fillActTemplate(htmlTemplate, currentAct);
+
         const res = await actsApi.getPdf(token, filledHtml);
         if (res.success && res.data) {
           // Сервер возвращает base64 без префикса (обычно)
@@ -47,7 +50,7 @@ export const ActPdfViewerPage: React.FC = () => {
           const src = res.data.startsWith('data:') ? res.data : `data:application/pdf;base64,${res.data}`;
           setPdfData(src);
         } else {
-          setError(res.message || 'Ошибка генерации PDF');
+          setError(res.description || res.message || 'Ошибка генерации PDF');
         }
       } catch (e) {
         setError('Ошибка сети');
@@ -85,7 +88,13 @@ export const ActPdfViewerPage: React.FC = () => {
         {!loading && !error && pdfData && (
             <iframe 
                 src={pdfData} 
-                style={{width: '100%', height: '100%', border: 'none'}} 
+                style={{
+                  width: '95%',
+                  height: '80vh',
+                  border: 'none',
+                  display: 'block',
+                  margin: '0 auto',
+                }}
                 title="PDF Preview"
             />
         )}

@@ -1,0 +1,314 @@
+/* === СТРАНИЦА ДЕТАЛЕЙ ЛС === */
+.lic-details ion-content {
+  --background: #f7fafc;
+  --color: #1f2937;
+  --overflow: auto;
+}
+
+.lic-details__body {
+  padding: 16px;
+  padding-bottom: 120px;
+}
+
+.lic-details__title {
+  font-weight: 700;
+}
+
+.lic-details__empty {
+  text-align: center;
+  padding: 48px 16px;
+  color: #9ca3af;
+}
+
+.lic-details__empty-icon {
+  font-size: 64px;
+  color: #d1d5db;
+  margin-bottom: 8px;
+}
+
+/* === СЕКЦИЯ === */
+.lic-section {
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  margin: 0 0 16px 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  position: relative;
+  overflow: hidden;
+  color: #1f2937;
+}
+
+.lic-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  background: #2563eb;
+}
+
+.lic-section--debt::before {
+  background: #ef4444;
+}
+
+.lic-section--counters::before {
+  background: #0ea5e9;
+}
+
+.lic-section--agreements::before {
+  background: #8b5cf6;
+}
+
+.lic-section--equipments::before {
+  background: #f59e0b;
+}
+
+.lic-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.lic-section--collapsed .lic-section__header {
+  margin-bottom: 0;
+}
+
+.lic-section__header--toggle {
+  cursor: pointer;
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.lic-section__header-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.lic-section__header-aside {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.lic-section__chevron {
+  font-size: 18px;
+  color: #9ca3af;
+  transition: transform 0.2s ease;
+}
+
+.lic-section__chevron--open {
+  transform: rotate(180deg);
+}
+
+.lic-section__icon {
+  font-size: 22px;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.lic-section--debt .lic-section__icon {
+  color: #ef4444;
+}
+
+.lic-section--counters .lic-section__icon {
+  color: #0ea5e9;
+}
+
+.lic-section--agreements .lic-section__icon {
+  color: #8b5cf6;
+}
+
+.lic-section--equipments .lic-section__icon {
+  color: #f59e0b;
+}
+
+.lic-section__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.lic-section__subtitle {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.lic-section__badge {
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.lic-section__empty {
+  font-size: 14px;
+  color: #9ca3af;
+  padding: 4px 0;
+}
+
+/* === ПОЛЯ / СТРОКИ === */
+.lic-field {
+  margin-bottom: 14px;
+}
+
+.lic-field:last-child {
+  margin-bottom: 0;
+}
+
+.lic-field__label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.lic-field__value {
+  font-size: 15px;
+  color: #111827;
+  line-height: 1.4;
+}
+
+.lic-field__value--bold {
+  font-weight: 700;
+}
+
+.lic-field__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.lic-field__row-icon {
+  font-size: 18px;
+  color: #6b7280;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+/* === ЭЛЕМЕНТ СПИСКА === */
+.lic-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid #f3f4f6;
+}
+
+.lic-row:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.lic-row:last-child {
+  padding-bottom: 0;
+}
+
+.lic-row__main {
+  min-width: 0;
+  flex: 1;
+}
+
+.lic-row__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lic-row__meta {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.lic-row__aside {
+  flex-shrink: 0;
+}
+
+/* === КОМПАКТНЫЕ СТРОКИ (раскрываемые секции) === */
+.lic-row--compact {
+  padding-right: 12px;
+  gap: 16px;
+}
+
+.lic-row__title--compact {
+  font-size: 13px;
+  font-weight: 400;
+  color: #374151;
+}
+
+.lic-row--compact .lic-row__meta {
+  font-size: 11px;
+}
+
+.lic-row--compact .lic-chip {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+}
+
+.lic-row__value {
+  font-size: 13px;
+  font-weight: 400;
+  color: #4b5563;
+  white-space: nowrap;
+}
+
+.lic-row__inline-icon {
+  font-size: 14px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.lic-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.lic-chip--success {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.lic-chip--danger {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.lic-chip--warning {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.lic-chip--muted {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.lic-chip--light {
+  background: #f9fafb;
+  color: #111827;
+  font-size: 13px;
+  padding: 6px 10px;
+}

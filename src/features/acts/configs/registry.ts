@@ -1,4 +1,3 @@
-import { HTML_BR, HTML_MI, HTML_MR, HTML_MRR, HTML_PLOMB, HTML_DA, HTML_DO, HTML_PREDP, HTML_AAD, HTML_WC, HTML_SF, HTML_SGE } from './htmlTemplates';
 import type { ActTemplateConfig } from '../types';
 
 const COMMON_FIELDS_TOP = [
@@ -17,7 +16,6 @@ export const ACT_TEMPLATES_REGISTRY: Record<string, ActTemplateConfig> = {
   actbr: {
     type: 'actbr',
     name: 'Акт замены аккумуляторной батареи',
-    htmlTemplate: HTML_BR,
     fields: [
       ...COMMON_FIELDS_TOP,
       { section: 'Снятый счетчик', key: 'removed_meter_model', label: 'Модель', type: 'string', required: true },
@@ -39,7 +37,6 @@ export const ACT_TEMPLATES_REGISTRY: Record<string, ActTemplateConfig> = {
   actplomb: {
     type: 'actplomb',
     name: 'Акт пломбирования',
-    htmlTemplate: HTML_PLOMB,
     fields: [
       ...COMMON_FIELDS_TOP,
 
@@ -71,7 +68,6 @@ export const ACT_TEMPLATES_REGISTRY: Record<string, ActTemplateConfig> = {
   actda: {
     type: 'actda',
     name: 'Акт недопуска для проведения проверки (отключения)',
-    htmlTemplate: HTML_DA,
     fields: [
       ...COMMON_FIELDS_TOP,
 
@@ -128,7 +124,6 @@ export const ACT_TEMPLATES_REGISTRY: Record<string, ActTemplateConfig> = {
   actmrr: {
     type: 'actmrr',
     name: 'Акт снятия показаний',
-    htmlTemplate: HTML_MRR,
     fields: [
       ...COMMON_FIELDS_TOP,
 
@@ -166,7 +161,6 @@ export const ACT_TEMPLATES_REGISTRY: Record<string, ActTemplateConfig> = {
   actmi: {
     type: 'actmi',
     name: 'Акт установки прибора',
-    htmlTemplate: HTML_MI,
     fields: [
       ...COMMON_FIELDS_TOP,
       { section: 'Прибор учета', key: 'meter_model', label: 'Модель', type: 'string' },
@@ -178,7 +172,6 @@ export const ACT_TEMPLATES_REGISTRY: Record<string, ActTemplateConfig> = {
   actdo: {
     type: 'actdo',
     name: 'Акт наряд на отключение (Ф29Э)',
-    htmlTemplate: HTML_DO,
     fields: [
       ...COMMON_FIELDS_TOP,
 
@@ -217,7 +210,6 @@ export const ACT_TEMPLATES_REGISTRY: Record<string, ActTemplateConfig> = {
   predp: {
     type: 'predp',
     name: 'Предписание',
-    htmlTemplate: HTML_PREDP,
     fields: [
       ...COMMON_FIELDS_TOP,
 
@@ -239,7 +231,6 @@ export const ACT_TEMPLATES_REGISTRY: Record<string, ActTemplateConfig> = {
   actaad: {
     type: 'actaad',
     name: 'Акт проверки газифицированного объекта (ААД)',
-    htmlTemplate: HTML_AAD,
     fields: [
       ...COMMON_FIELDS_TOP,
 
@@ -289,7 +280,6 @@ export const ACT_TEMPLATES_REGISTRY: Record<string, ActTemplateConfig> = {
   actmr: {
     type: 'actmr',
     name: 'Акт замены газового счетчика',
-    htmlTemplate: HTML_MR, // Замените на соответствующий шаблон, если есть HTML_MR
     fields: [
       ...COMMON_FIELDS_TOP,
       
@@ -325,7 +315,6 @@ export const ACT_TEMPLATES_REGISTRY: Record<string, ActTemplateConfig> = {
   actsf: {
     type: 'actsf',
     name: 'Акт срыва/установки пломбы',
-    htmlTemplate: HTML_SF, // Замените на соответствующий шаблон, если есть HTML_SF
     fields: [
       ...COMMON_FIELDS_TOP,
       
@@ -368,7 +357,6 @@ export const ACT_TEMPLATES_REGISTRY: Record<string, ActTemplateConfig> = {
   actsge: {
     type: 'actsge',
     name: 'Акт отключения бытового газоиспользующего оборудования',
-    htmlTemplate: HTML_SGE, // Замените на соответствующий шаблон, если есть HTML_SGE
     fields: [
       ...COMMON_FIELDS_TOP,
       
@@ -409,27 +397,60 @@ export const ACT_TEMPLATES_REGISTRY: Record<string, ActTemplateConfig> = {
   },
 
   work_completed: {
-    // ВАЖНО: тип должен совпадать с бэкендом и тем, что используется в UI (плюс-меню, финальная страница)
     type: 'work_completed',
     name: 'Акт выполненных работ',
-    htmlTemplate: HTML_WC,
+  },
+
+  work_completed_to: {
+    type: 'work_completed_to',
+    name: 'Акт выполненных работ ТО',
     fields: [
       { section: 'Реквизиты', key: 'act_number', label: 'Номер акта', type: 'string', required: true },
-      { section: 'Реквизиты', key: 'act_date', label: 'Дата', type: 'date', required: true },
+      { section: 'Реквизиты', key: 'act_date', label: 'Дата акта', type: 'date', required: true },
+      { section: 'Реквизиты', key: 'act_time', label: 'Время (ЧЧ:ММ)', type: 'string' },
+      { section: 'Реквизиты', key: 'request_kind', label: 'Характер заявки', type: 'string' },
+      { section: 'Реквизиты', key: 'request_text', label: 'Текст заявки', type: 'textarea' },
+      { section: 'Реквизиты', key: 'price_order_number', label: 'Приказ прейскуранта №', type: 'string' },
+      { section: 'Реквизиты', key: 'price_order_date', label: 'Дата приказа', type: 'date' },
 
-      { section: 'Данные',    key: 'owner_name', label: 'Владелец объекта', type: 'string', required: true },
-      { section: 'Данные',    key: 'owner_phone', label: 'Телефон владельца', type: 'string', required: false },
-      { section: 'Данные',    key: 'object_address', label: 'Адрес объекта', type: 'address', required: true },
-      { section: 'Данные',    key: 'lic', label: 'Лицевой счёт', type: 'string', required: false },
+      ...[1, 2, 3, 4, 5].flatMap((n) => [
+        { section: `Услуга ${n}`, key: `svc${n}_name`, label: 'Наименование', type: 'string' as const, required: n === 1 },
+        { section: `Услуга ${n}`, key: `svc${n}_unit`, label: 'Ед. изм.', type: 'string' as const },
+        { section: `Услуга ${n}`, key: `svc${n}_qty`, label: 'Количество', type: 'number' as const },
+        { section: `Услуга ${n}`, key: `svc${n}_price`, label: 'Цена с НДС', type: 'number' as const },
+        {
+          section: `Услуга ${n}`,
+          key: `svc${n}_done`,
+          label: 'Выполнено',
+          type: 'select' as const,
+          options: ['Да', 'Нет'],
+        },
+      ]),
 
-      { section: 'Работы',    key: 'work_description', label: 'Перечень выполненных работ', type: 'textarea', required: true },
-      { section: 'Работы',    key: 'amount', label: 'Стоимость (руб.)', type: 'number', required: false },
-      { section: 'Работы',    key: 'warranty', label: 'Гарантия / примечание', type: 'string', required: false },
-      { section: 'Работы',    key: 'photo_result', label: 'Фото результата', type: 'image', required: false },
+      { section: 'Абонент', key: 'owner_name', label: 'ФИО абонента', type: 'string', required: true },
+      { section: 'Абонент', key: 'object_address', label: 'Адрес (улица)', type: 'address', required: true },
+      { section: 'Абонент', key: 'house', label: 'Дом', type: 'string' },
+      { section: 'Абонент', key: 'apartment', label: 'Квартира', type: 'string' },
+      { section: 'Абонент', key: 'owner_phone', label: 'Телефон', type: 'string' },
+      { section: 'Абонент', key: 'lic', label: 'Лицевой счёт', type: 'string' },
+      { section: 'Абонент', key: 'contract', label: 'Договор', type: 'string' },
+      { section: 'Абонент', key: 'note', label: 'Примечание', type: 'textarea' },
 
-      { section: 'Подписи',   key: 'technician_name', label: 'ФИО слесаря', type: 'string', required: true },
-      { section: 'Подписи',   key: 'technician_signature', label: 'Подпись слесаря', type: 'signature', required: false },
-      { section: 'Подписи',   key: 'owner_signature', label: 'Подпись владельца', type: 'signature', required: false },
+      { section: 'Оборудование', key: 'eq_boiler_mark', label: 'Котел — марка', type: 'string' },
+      { section: 'Оборудование', key: 'eq_boiler_qty', label: 'Котел — кол-во', type: 'number' },
+      { section: 'Оборудование', key: 'eq_stove_mark', label: 'Плита — марка', type: 'string' },
+      { section: 'Оборудование', key: 'eq_stove_qty', label: 'Плита — кол-во', type: 'number' },
+      { section: 'Оборудование', key: 'eq_convector_mark', label: 'Конвектор — марка', type: 'string' },
+      { section: 'Оборудование', key: 'eq_convector_qty', label: 'Конвектор — кол-во', type: 'number' },
+      { section: 'Оборудование', key: 'eq_pipe_mark', label: 'Подводящий газопровод — марка', type: 'string' },
+      { section: 'Оборудование', key: 'eq_pipe_qty', label: 'Подводящий газопровод — кол-во', type: 'number' },
+      { section: 'Оборудование', key: 'eq_other_mark', label: 'Другое — марка', type: 'string' },
+      { section: 'Оборудование', key: 'eq_other_qty', label: 'Другое — кол-во', type: 'number' },
+
+      { section: 'Подписи', key: 'technician_name', label: 'ФИО исполнителя', type: 'string', required: true },
+      { section: 'Подписи', key: 'technician_position', label: 'Должность исполнителя', type: 'string' },
+      { section: 'Подписи', key: 'technician_signature', label: 'Подпись исполнителя', type: 'signature' },
+      { section: 'Подписи', key: 'owner_signature', label: 'Подпись заказчика', type: 'signature' },
     ],
   },
 

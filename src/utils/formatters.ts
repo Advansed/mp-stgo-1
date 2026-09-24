@@ -6,33 +6,32 @@
  */
 export const normalizeAddress = (addr: any): string => {
     if (!addr) return '';
-    
-    // 1. Если это уже строка — возвращаем как есть
-    if (typeof addr === 'string') return addr;
-    
-    // 2. Проверяем структуру как в InvoicePrintForm / 1C (поле .address)
-    if (addr?.address && typeof addr.address === 'string') return addr.address;
-    
-    // 3. Проверяем структуру DaData (поле .value)
-    if (addr?.value && typeof addr.value === 'string') return addr.value;
-    
-    // 4. Проверяем просто поле .text (иногда бывает)
-    if (addr?.text && typeof addr.text === 'string') return addr.text;
-    
-    // 5. Проверяем поле .name (для гео-объектов)
-    if (addr?.name && typeof addr.name === 'string') return addr.name;
 
-    // 6. Проверяем поле .description (редкий кейс)
-    if (addr?.description && typeof addr.description === 'string') return addr.description;
-    
-    // 7. Если это массив (бывает и такое в странных API)
+    if (typeof addr === 'string') return addr.replace(/,\s*$/, '').trim();
+
     if (Array.isArray(addr) && addr.length > 0) {
-        return normalizeAddress(addr[0]); // Рекурсивно пробуем первый элемент
+        return normalizeAddress(addr[0]);
     }
 
-    // Если ничего не подошло, но это объект — пробуем JSON, но лучше вернуть пустоту, 
-    // чтобы не пугать юзера.
-    return ''; 
+    if (typeof addr === 'object') {
+        if (addr.address && typeof addr.address === 'string') return addr.address;
+        if (addr.value && typeof addr.value === 'string') return addr.value;
+        if (addr.text && typeof addr.text === 'string') return String(addr.text);
+        if (addr.address_go) return String(addr.address_go);
+        if (addr.full) return String(addr.full);
+        if (addr.name && typeof addr.name === 'string') return addr.name;
+        if (addr.description && typeof addr.description === 'string') return addr.description;
+
+        const parts: string[] = [];
+        if (addr.city) parts.push(String(addr.city));
+        if (addr.settlement) parts.push(String(addr.settlement));
+        if (addr.street) parts.push(String(addr.street));
+        if (addr.house) parts.push(addr.street ? `д. ${addr.house}` : String(addr.house));
+        if (addr.flat || addr.apartment) parts.push(`кв. ${addr.flat || addr.apartment}`);
+        if (parts.length) return parts.join(', ');
+    }
+
+    return '';
 };
 
 /**

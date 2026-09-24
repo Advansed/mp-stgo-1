@@ -3,6 +3,7 @@
 export const API_METHODS = {
   LOGIN:            'login',
   INVOICES:         'mp_invoices',
+  SET_INV:          'mp_set_inv',
   
   // Варианты для обновления адреса (используем в Fallback)
   UPDATE_ADDRESS_V1: 'upd_inv_address',    // Старый (дает ошибку)
@@ -11,6 +12,7 @@ export const API_METHODS = {
   
   // Лицевые (LICS)
   GET_LICS:         'get_lics',
+  GET_LIC:          'get_lic',
   ADD_LIC:          'add_lic',
   DELETE_LIC:       'del_lic',
   
@@ -18,11 +20,14 @@ export const API_METHODS = {
   GET_ACTS:         'mp_get_acts',
   GET_ACT:          'mp_get_act',
   SET_ACT:          'mp_set_act',
-  GET_PDF:          'mp_get_pdf'
+  GET_PDF:          'mp_get_pdf',
+
+  // Геолокация
+  SET_LOCATION:     'mp_set_location',
 };
 
 export const VESTA_METHODS = {
-  SETTLEMENTS:      'getSettlements',
-  STREETS:          'getStreets',
-  HOUSES:           'getHouses'
-};
+  SETTLEMENTS: 'getSettlements',
+  STREETS: 'getStreets',
+  HOUSES: 'getHouses',
+} as const;

@@ -1,55 +1,92 @@
-// src/components/ui/InvoiceItem.tsx
 import React from 'react';
 import { IonIcon, IonRippleEffect } from '@ionic/react';
-import { locationOutline, calendarOutline } from 'ionicons/icons';
+import {
+  calendarOutline,
+  documentTextOutline,
+  locationOutline,
+} from 'ionicons/icons';
+import type { Invoice } from '../../domain/types';
 import './InvoiceItem.css';
 
 interface InvoiceItemProps {
-  invoice: any;
+  invoice: Invoice;
   onClick: () => void;
 }
 
+const getStatusTone = (status: string): 'new' | 'done' | 'error' | 'muted' => {
+  const s = (status || '').toLowerCase();
+  if (s.includes('новая') || s.includes('принята') || s.includes('назнач') || s.includes('в работе')) {
+    return 'new';
+  }
+  if (s.includes('завершен') || s.includes('выполнена') || s.includes('закрыта') || s.includes('completed')) {
+    return 'done';
+  }
+  if (s.includes('отмена')) return 'error';
+  if (s.includes('отлож')) return 'muted';
+  return 'muted';
+};
+
+const formatDate = (value?: string) => {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString('ru-RU');
+};
+
+const isTechnicalId = (value?: string) => {
+  const s = String(value || '').trim();
+  if (!s) return true;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+};
+
 export const InvoiceItem: React.FC<InvoiceItemProps> = ({ invoice, onClick }) => {
-  
-  // Определяем стиль статуса
-  const getStatusClass = (status: string) => {
-    const s = status.toLowerCase();
-    if (s.includes('новая') || s.includes('принята')) return 'new';
-    if (s.includes('выполнена') || s.includes('закрыта')) return 'done';
-    if (s.includes('отмена')) return 'error';
-    return 'new'; // default
-  };
+  const status = invoice.status || 'В работе';
+  const tone = getStatusTone(status);
+  const clientName = invoice.client_name || invoice.applicant || '';
+  const address = invoice.addressText || 'Адрес не указан';
+  const service = invoice.service || '';
+  const dateLabel = formatDate(invoice.date);
+  const numberLabel = !isTechnicalId(invoice.number) ? String(invoice.number).trim() : '';
 
   return (
-    <div className="invoice-card ion-activatable" onClick={onClick}>
+    <div
+      className={`inv-card ion-activatable inv-card--clickable inv-card--${tone}`}
+      onClick={onClick}
+    >
       <IonRippleEffect />
-      
-      {/* Шапка */}
-      <div className="card-header">
-        <div>
-           <span className="invoice-number">#{invoice.number}</span>
-           <span className="invoice-date">{invoice.date}</span>
+
+      <div className="inv-card__top">
+        <div className="inv-card__title-block">
+          {numberLabel ? <div className="inv-card__number">№ {numberLabel}</div> : null}
+          <div className={`inv-card__client${numberLabel ? '' : ' inv-card__client--title'}`}>
+            {clientName || 'Без ФИО'}
+          </div>
         </div>
-        <div className={`status-badge ${getStatusClass(invoice.status)}`}>
-            {invoice.status}
-        </div>
+        <span className={`inv-card__status inv-card__status--${tone}`}>{status}</span>
       </div>
 
-      {/* Адрес (Гарантированная строка) */}
-      <div className="info-row">
-         <IonIcon icon={locationOutline} className="info-icon icon-blue" />
-         <span className="info-value info-text">
-            {invoice.addressText}
-         </span>
+      <div className="inv-card__body">
+        <div className="inv-card__row">
+          <IonIcon icon={locationOutline} className="inv-card__icon inv-card__icon--accent" />
+          <span className="inv-card__text inv-card__text--address">{address}</span>
+        </div>
+
+        {service ? (
+          <div className="inv-card__row">
+            <IonIcon icon={documentTextOutline} className="inv-card__icon" />
+            <span className="inv-card__text inv-card__text--service">{service}</span>
+          </div>
+        ) : null}
       </div>
 
-      {/* Дата плана */}
-      <div className="info-row">
-         <IonIcon icon={calendarOutline} className="info-icon icon-gray" />
-         <span className="info-value info-text">
-            План: {invoice.date}
-         </span>
-      </div>
+      {dateLabel ? (
+        <div className="inv-card__footer">
+          <span className="inv-card__chip">
+            <IonIcon icon={calendarOutline} />
+            <span>{dateLabel}</span>
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 };

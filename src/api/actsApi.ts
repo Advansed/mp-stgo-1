@@ -1,29 +1,25 @@
 import { post } from './http';
 import { API_METHODS } from './endpoints';
+import type { Act } from '../domain/types';
 
 export const actsApi = {
-  // Получить список актов по заявке
   getByInvoice: async (token: string, invoiceId: string) => {
-    return await post(API_METHODS.GET_ACTS, { token, invoice_id: invoiceId });
+    return await post<Act[]>(API_METHODS.GET_ACTS, { token, invoice_id: invoiceId });
   },
 
-  // Получить конкретный акт (полные данные)
   getById: async (token: string, invoiceId: string, actId: string) => {
-    return await post(API_METHODS.GET_ACT, { token, invoice_id: invoiceId, act_id: actId });
+    return await post<Act>(API_METHODS.GET_ACT, { token, invoice_id: invoiceId, act_id: actId });
   },
 
-  // ✅ Получить/создать черновик акта по типу (сервер сам выдаст act_number)
   getByType: async (token: string, invoiceId: string, actType: string) => {
-    return await post(API_METHODS.GET_ACT, { token, invoice_id: invoiceId, act_type: actType });
+    return await post<Act>(API_METHODS.GET_ACT, { token, invoice_id: invoiceId, act_type: actType });
   },
 
-  // Создать/Обновить акт
-  save: async (token: string, actData: any) => {
-    return await post(API_METHODS.SET_ACT, { token, ...actData });
+  save: async (token: string, actData: Record<string, unknown>) => {
+    return await post<Act>(API_METHODS.SET_ACT, { token, ...actData });
   },
 
-  // Генерация PDF
   getPdf: async (token: string, templateHtml: string) => {
-    return await post(API_METHODS.GET_PDF, { token, template: templateHtml });
+    return await post<string>(API_METHODS.GET_PDF, { token, template: templateHtml });
   }
 };

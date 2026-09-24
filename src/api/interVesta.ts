@@ -1,4 +1,5 @@
 import { getData } from './http';
+import { VESTA_METHODS } from './endpoints';
 
 // Типы ответов от Vesta
 export interface VestaSettlement {
@@ -23,16 +24,14 @@ export interface VestaHouse {
 export const interVestaApi = {
   // 1. Получить населенные пункты (обычно кешируется)
   getSettlements: async (token: string) => {
-    return await getData('getSettlements', { token });
+    return await getData(VESTA_METHODS.SETTLEMENTS, { token });
   },
 
-  // 2. Получить улицы по ID поселения
   getStreets: async (token: string, settlementId: string) => {
-    return await getData('getStreets', { token, s_id: settlementId });
+    return await getData(VESTA_METHODS.STREETS, { token, s_id: settlementId });
   },
 
-  // 3. Получить дома по ID улицы (API требует массив ID!)
   getHouses: async (token: string, streetIds: string[]) => {
-    return await getData('getHouses', { token, ids: streetIds });
+    return await getData(VESTA_METHODS.HOUSES, { token, ids: streetIds });
   }
 };

@@ -1,0 +1,319 @@
+.form {
+  padding: 0 0 180px;
+}
+
+.section {
+  background: white;
+  border-radius: 20px;
+  padding: 0.5em;
+  padding-left: calc(0.5em + 6px);
+  margin: 0 0 0.5em;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  position: relative;
+  overflow: hidden;
+  color: #1f2937;
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  background: var(--act-accent, #2563eb);
+}
+
+.sectionCollapsed .sectionHead {
+  margin-bottom: 0;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5em;
+  margin-bottom: 0.5em;
+  cursor: pointer;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sectionHeadMain {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sectionIcon {
+  font-size: 22px;
+  color: var(--act-accent, #2563eb);
+  flex-shrink: 0;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.sectionSubtitle {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.sectionChevron {
+  font-size: 18px;
+  color: #9ca3af;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.sectionChevronOpen {
+  transform: rotate(180deg);
+}
+
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+}
+
+.field {
+  padding: 0.75em 0;
+  border-top: 1px solid #f3f4f6;
+}
+
+.field:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.field:last-child {
+  padding-bottom: 0;
+}
+
+.fieldError {
+  border-radius: 12px;
+  outline: 1px solid #e53e3e;
+  outline-offset: 4px;
+}
+
+.fieldLabel {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.fieldRequired {
+  color: #e53e3e;
+}
+
+.fieldHint {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #e53e3e;
+}
+
+.dateTrigger {
+  --padding-start: 0.5em;
+  --inner-padding-end: 0;
+  --background: transparent;
+  border-bottom: 1px solid #cbd5e0;
+  margin: 0;
+  min-height: 40px;
+  cursor: pointer;
+  font-size: calc(16px - 1pt);
+  font-weight: 700;
+}
+
+.dateTrigger:focus-within {
+  border-bottom-color: #3182ce;
+}
+
+.dateValue {
+  color: #111827;
+  font-size: calc(16px - 1pt);
+  font-weight: 700;
+}
+
+.datePlaceholder {
+  color: #a0aec0;
+}
+
+.dropzone {
+  position: relative;
+  border: 2px dashed #cbd5e0;
+  border-radius: 12px;
+  height: 100px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.dropzoneIcon {
+  font-size: 24px;
+  color: #a0aec0;
+}
+
+.dropzoneText {
+  font-size: 12px;
+  color: #a0aec0;
+}
+
+.dropzoneInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.imagePreview {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.imagePreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.imageClear {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.imageClear ion-icon {
+  color: white;
+  font-size: 24px;
+}
+
+.signPreview {
+  position: relative;
+  width: 100%;
+  text-align: center;
+}
+
+.signPreview img {
+  max-height: 120px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.signClear {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.signPad {
+  width: 100%;
+}
+
+.signCanvasWrap {
+  position: relative;
+  border: 2px dashed #cbd5e0;
+  border-radius: 12px;
+  background: #f8fafc;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.signCanvas {
+  width: 100%;
+  height: 160px;
+  display: block;
+}
+
+.signHint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  color: #a0aec0;
+  font-size: 12px;
+}
+
+.signActions {
+  text-align: right;
+}
+
+.fabBar {
+  position: fixed;
+  bottom: 100px;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+.fabBar ion-button {
+  --background: #3182ce;
+  --border-radius: 14px;
+  --box-shadow: 0 4px 12px rgba(49, 130, 206, 0.4);
+  height: 56px;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.fieldControl {
+  --padding-start: 0.5em;
+  --inner-padding-end: 0;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+  --background: transparent;
+  --highlight-color-focused: transparent;
+  --highlight-color-valid: transparent;
+  --highlight-color-invalid: transparent;
+  width: 100%;
+  margin: 0;
+  border-bottom: 1px solid #94a3b8;
+  border-radius: 0;
+  font-size: calc(16px - 1pt);
+  font-weight: 700;
+}
+
+.fieldControl:focus-within {
+  border-bottom-color: #3182ce;
+  border-bottom-width: 2px;
+}
+
+.fieldControl::part(native) {
+  padding-left: 0.5em;
+  padding-right: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  font-size: calc(16px - 1pt);
+  font-weight: 700;
+}
+
+.fieldError .fieldControl,
+.fieldError .dateTrigger {
+  border-bottom-color: #e53e3e;
+}

@@ -1,6 +1,6 @@
-// src/domain/normalizers.ts
+import type { Invoice } from './types';
 
-export const normalizeInvoice = (inv: any) => {
+export const normalizeInvoice = (inv: any): Invoice => {
     // 1. АДРЕС (Смотрим types (1).ts -> Address { address, lat, lon })
     // Если пришел объект Address, берем из него поле .address
     const rawAddr = inv.address || "";

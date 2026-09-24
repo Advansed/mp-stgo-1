@@ -1,0 +1,177 @@
+.actsListToolbar {
+  --background: #f7fafc;
+}
+
+.actsListBody {
+  padding: 16px;
+  padding-bottom: 250px;
+}
+
+.actsListEmpty {
+  text-align: center;
+  margin-top: 60px;
+  padding: 20px;
+  color: #9ca3af;
+}
+
+.actsCard {
+  --background: white;
+  --border-radius: 20px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+  position: relative;
+}
+
+.actsCard::part(native) {
+  padding-inline-start: 16px;
+}
+
+.actsCardIcon {
+  width: 42px;
+  height: 42px;
+  background: #ebf8ff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  color: #3182ce;
+  flex-shrink: 0;
+}
+
+.actsCardTitle {
+  font-weight: 700;
+  font-size: 15px;
+  color: #111827;
+  margin: 0;
+}
+
+.actsCardMeta {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 4px 0 0;
+}
+
+/* === Выбор типа акта === */
+.actsTypeModal {
+  --width: 100%;
+  --height: 85%;
+  --border-radius: 20px 20px 0 0;
+  --background: #f7fafc;
+  align-items: flex-end;
+}
+
+.actsTypeModal::part(content) {
+  border-radius: 20px 20px 0 0;
+}
+
+.actsTypeSheet {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #f7fafc;
+  box-sizing: border-box;
+}
+
+.actsTypeSheet__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 12px;
+  flex-shrink: 0;
+}
+
+.actsTypeSheet__title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.2px;
+}
+
+.actsTypeSheet__subtitle {
+  margin-top: 2px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.actsTypeSheet__close {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: #eef2f7;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.actsTypeSheet__close ion-icon {
+  font-size: 22px;
+}
+
+.actsTypeSheet__content {
+  --background: #f7fafc;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.actsTypeSheet__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 12px 28px;
+}
+
+.actsTypeSheet__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  padding: 14px 14px;
+  cursor: pointer;
+  color: #111827;
+}
+
+.actsTypeSheet__item--accent {
+  border-color: rgba(37, 99, 235, 0.25);
+  background: #f8fbff;
+}
+
+.actsTypeSheet__item:active {
+  transform: scale(0.985);
+  background: #f8fafc;
+}
+
+.actsTypeSheet__item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #2563eb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.actsTypeSheet__item-icon ion-icon {
+  font-size: 20px;
+}
+
+.actsTypeSheet__item-text {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  min-width: 0;
+}

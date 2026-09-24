@@ -27,6 +27,7 @@ import {
   trashOutline,
   chevronForwardOutline,
   closeOutline,
+  locateOutline,
 } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
@@ -184,6 +185,16 @@ export const SettingsPage: React.FC = () => {
                 <IonIcon slot="end" icon={chevronForwardOutline} className="chev" />
               </IonItem>
 
+              <IonItem className="settings-item">
+                <IonIcon slot="start" icon={locateOutline} className="settings-icon" />
+                <IonLabel>
+                  <div className="settings-label">Геолокация</div>
+                  <IonNote className="settings-note">
+                    Координаты отправляются каждые 5 мин, пока приложение открыто
+                  </IonNote>
+                </IonLabel>
+              </IonItem>
+
               <IonItem button className="settings-item" onClick={handleAboutTap}>
                 <IonIcon slot="start" icon={informationCircleOutline} className="settings-icon" />
                 <IonLabel>
@@ -255,7 +266,7 @@ export const SettingsPage: React.FC = () => {
         <IonModal
           isOpen={showEaster}
           onDidDismiss={() => setShowEaster(false)}
-          cssClass="easter-modal"
+          className="easter-modal"
           backdropDismiss={true}
         >
           <div className="easter-wrap" onClick={() => setShowEaster(false)} role="button" tabIndex={0}>

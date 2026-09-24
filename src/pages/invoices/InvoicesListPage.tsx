@@ -35,7 +35,7 @@ export const InvoicesListPage: React.FC = () => {
           <IonRefresherContent />
         </IonRefresher>
 
-        <div style={{paddingBottom: '100px'}}>
+        <div style={{ padding: '16px 0 120px' }}>
           {loading && list.length === 0 && (
              <div style={{display: 'flex', justifyContent: 'center', paddingTop: '20px'}}>
                <IonSpinner name="crescent" />
@@ -46,7 +46,7 @@ export const InvoicesListPage: React.FC = () => {
             <InvoiceItem 
                 key={inv.id} 
                 invoice={inv} 
-                onClick={() => history.push(`/app/invoices/${inv.id}`)} //
+                onClick={() => history.push(`/app/invoices/${inv.id}`)}
             />
           ))}
         </div>

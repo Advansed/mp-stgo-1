@@ -1,5 +1,7 @@
 // src/utils/licsFormat.ts
 
+import { normalizeAddress } from './formatters';
+
 export const formatSum = (sum: number | string | undefined | null): string => {
   const val = Number(sum);
   if (isNaN(val)) return '0,00 ₽';
@@ -32,26 +34,12 @@ export const getDebtStatus = (
   return 'none';
 };
 
-export const formatAddress = (addr: any): string => {
-  if (!addr) return '';
+export const formatAddress = (addr: unknown): string => normalizeAddress(addr);
 
-  if (typeof addr === 'string') {
-    return addr.replace(/,\s*$/, '').trim();
-  }
-
-  if (typeof addr === 'object') {
-    if (addr.text) return String(addr.text);
-    if (addr.address_go) return String(addr.address_go);
-    if (addr.full) return String(addr.full);
-
-    const parts: string[] = [];
-    if (addr.settlement) parts.push(String(addr.settlement));
-    if (addr.street) parts.push(String(addr.street));
-    if (addr.house) parts.push(`д. ${addr.house}`);
-    if (addr.apartment) parts.push(`кв. ${addr.apartment}`);
-
-    return parts.join(', ');
-  }
-
-  return '';
-};
+export function getLicCode(lic: unknown): string {
+  if (!lic) return '';
+  if (typeof lic === 'string') return lic.trim();
+  if (typeof lic !== 'object') return '';
+  const o = lic as Record<string, unknown>;
+  return String(o.code ?? o.account ?? o.lic ?? o.lc ?? o.ls ?? o.personal_account ?? '').trim();
+}

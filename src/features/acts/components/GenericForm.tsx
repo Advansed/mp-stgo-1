@@ -1,97 +1,186 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { 
-  IonList, IonItem, IonLabel, IonInput, IonTextarea, 
-  IonSelect, IonSelectOption, IonDatetime, IonModal,
-  IonButton, IonIcon, IonContent, IonHeader, IonToolbar, IonButtons, IonTitle // 🔥 ДОБАВИЛ IonHeader
+import {
+  IonItem,
+  IonLabel,
+  IonInput,
+  IonTextarea,
+  IonSelect,
+  IonSelectOption,
+  IonDatetime,
+  IonModal,
+  IonButton,
+  IonIcon,
+  IonContent,
+  IonHeader,
+  IonToolbar,
+  IonButtons,
+  IonTitle,
 } from '@ionic/react';
-import { cameraOutline, closeCircle, pencilOutline, calendarOutline } from 'ionicons/icons';
-import { ActTemplateConfig } from '../types';
+import {
+  cameraOutline,
+  closeCircle,
+  calendarOutline,
+  chevronDownOutline,
+  documentTextOutline,
+  peopleOutline,
+  homeOutline,
+  createOutline,
+  constructOutline,
+  flashOutline,
+  listOutline,
+} from 'ionicons/icons';
+import type { ActFieldConfig, ActTemplateConfig } from '../types';
+import styles from './GenericForm.module.css';
 
-// --- КОМПОНЕНТ ПОДПИСИ ---
-const SignaturePad = ({ value, onChange }: { value: string, onChange: (val: string) => void }) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [isDrawing, setIsDrawing] = useState(false);
+const ACCENTS = ['#2563eb', '#0ea5e9', '#8b5cf6', '#d69e2e', '#0d9488', '#ef4444', '#f59e0b', '#6366f1'];
 
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (canvas) {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = 160;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-                ctx.strokeStyle = '#000000';
-                ctx.lineWidth = 2;
-                ctx.lineCap = 'round';
-            }
-        }
-    }, []);
+function sectionAccent(title: string, index: number): string {
+  const t = title.toLowerCase();
+  if (t.includes('подпис')) return '#6366f1';
+  if (t.includes('абонент') || t.includes('владель')) return '#2563eb';
+  if (t.includes('объект') || t.includes('адрес')) return '#ef4444';
+  if (t.includes('прибор') || t.includes('счетчик') || t.includes('счётчик') || t.includes('пломб')) return '#0ea5e9';
+  if (t.includes('оборуд')) return '#f59e0b';
+  if (t.includes('услуг') || t.includes('работ')) return '#d69e2e';
+  if (t.includes('фото') || t.includes('реквизит') || t.includes('данн')) return '#0d9488';
+  return ACCENTS[index % ACCENTS.length];
+}
 
-    const startDrawing = (e: any) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        setIsDrawing(true);
-        const ctx = canvas.getContext('2d');
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        ctx?.beginPath();
-        ctx?.moveTo(clientX - rect.left, clientY - rect.top);
-    };
+function sectionIcon(title: string): string {
+  const t = title.toLowerCase();
+  if (t.includes('подпис')) return createOutline;
+  if (t.includes('абонент') || t.includes('владель') || t.includes('сторон')) return peopleOutline;
+  if (t.includes('объект') || t.includes('адрес')) return homeOutline;
+  if (t.includes('прибор') || t.includes('счетчик') || t.includes('счётчик') || t.includes('пломб')) return constructOutline;
+  if (t.includes('оборуд')) return flashOutline;
+  if (t.includes('услуг') || t.includes('работ')) return listOutline;
+  return documentTextOutline;
+}
 
-    const draw = (e: any) => {
-        if (!isDrawing) return;
-        const canvas = canvasRef.current;
-        const ctx = canvas?.getContext('2d');
-        if (!ctx || !canvas) return;
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        ctx.lineTo(clientX - rect.left, clientY - rect.top);
-        ctx.stroke();
-    };
+type FieldGroup = { title: string; fields: ActFieldConfig[] };
 
-    const endDrawing = () => {
-        if (!isDrawing) return;
-        setIsDrawing(false);
-        const canvas = canvasRef.current;
-        if (canvas) onChange(canvas.toDataURL('image/png'));
-    };
+function groupFields(fields: ActFieldConfig[]): FieldGroup[] {
+  const groups: FieldGroup[] = [];
+  const map = new Map<string, FieldGroup>();
 
-    const clear = () => {
-        const canvas = canvasRef.current;
-        const ctx = canvas?.getContext('2d');
-        if (ctx && canvas) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            onChange('');
-        }
-    };
-
-    if (value && !isDrawing) {
-        return (
-            <div style={{position: 'relative', width: '100%', textAlign: 'center'}}>
-                <img src={value} alt="Signature" style={{maxHeight: '120px', border: '1px solid #ccc', borderRadius: '8px'}} />
-                <IonButton fill="clear" color="danger" size="small" style={{position: 'absolute', top: 0, right: 0}} onClick={() => onChange('')}>
-                    <IonIcon slot="icon-only" icon={closeCircle} />
-                </IonButton>
-            </div>
-        );
+  for (const field of fields) {
+    const title = (field.section || 'Основное').trim() || 'Основное';
+    let group = map.get(title);
+    if (!group) {
+      group = { title, fields: [] };
+      map.set(title, group);
+      groups.push(group);
     }
+    group.fields.push(field);
+  }
+  return groups;
+}
 
+const SignaturePad = ({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = 160;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+      }
+    }
+  }, []);
+
+  const startDrawing = (e: any) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    setIsDrawing(true);
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    ctx?.beginPath();
+    ctx?.moveTo(clientX - rect.left, clientY - rect.top);
+  };
+
+  const draw = (e: any) => {
+    if (!isDrawing) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx || !canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    ctx.lineTo(clientX - rect.left, clientY - rect.top);
+    ctx.stroke();
+  };
+
+  const endDrawing = () => {
+    if (!isDrawing) return;
+    setIsDrawing(false);
+    const canvas = canvasRef.current;
+    if (canvas) onChange(canvas.toDataURL('image/png'));
+  };
+
+  const clear = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (ctx && canvas) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      onChange('');
+    }
+  };
+
+  if (value && !isDrawing) {
     return (
-        <div style={{width: '100%'}}>
-            <div style={{border: '2px dashed #cbd5e0', borderRadius: '12px', background: '#f8fafc', overflow: 'hidden', touchAction: 'none'}}>
-                <canvas
-                    ref={canvasRef}
-                    style={{width: '100%', height: '160px', display: 'block'}}
-                    onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={endDrawing} onMouseLeave={endDrawing}
-                    onTouchStart={startDrawing} onTouchMove={draw} onTouchEnd={endDrawing}
-                />
-                {!isDrawing && !value && <div style={{position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none', color: '#a0aec0', fontSize: '12px'}}>Расписаться</div>}
-            </div>
-            <div style={{textAlign: 'right'}}><IonButton fill="clear" size="small" color="medium" onClick={clear}>Очистить</IonButton></div>
-        </div>
+      <div className={styles.signPreview}>
+        <img src={value} alt="Signature" />
+        <IonButton
+          fill="clear"
+          color="danger"
+          size="small"
+          className={styles.signClear}
+          onClick={() => onChange('')}
+        >
+          <IonIcon slot="icon-only" icon={closeCircle} />
+        </IonButton>
+      </div>
     );
+  }
+
+  return (
+    <div className={styles.signPad}>
+      <div className={styles.signCanvasWrap}>
+        <canvas
+          ref={canvasRef}
+          className={styles.signCanvas}
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={endDrawing}
+          onMouseLeave={endDrawing}
+          onTouchStart={startDrawing}
+          onTouchMove={draw}
+          onTouchEnd={endDrawing}
+        />
+        {!isDrawing && !value && <div className={styles.signHint}>Расписаться</div>}
+      </div>
+      <div className={styles.signActions}>
+        <IonButton fill="clear" size="small" color="medium" onClick={clear}>
+          Очистить
+        </IonButton>
+      </div>
+    </div>
+  );
 };
 
 interface GenericFormProps {
@@ -101,11 +190,25 @@ interface GenericFormProps {
 }
 
 export const GenericForm: React.FC<GenericFormProps> = ({ template, initialData, onSave }) => {
-  const { control, handleSubmit, reset, formState: { errors } } = useForm({
-    defaultValues: initialData || {}
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    defaultValues: initialData || {},
   });
 
   const [showDateModal, setShowDateModal] = useState<string | null>(null);
+  const groups = useMemo(() => groupFields(template.fields ?? []), [template.fields]);
+
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {};
+    groups.forEach((g, i) => {
+      init[g.title] = i === 0;
+    });
+    return init;
+  });
 
   useEffect(() => {
     if (initialData && Object.keys(initialData).length > 0) {
@@ -113,144 +216,211 @@ export const GenericForm: React.FC<GenericFormProps> = ({ template, initialData,
     }
   }, [initialData, reset]);
 
-  const onError = (errors: any) => {
-      console.log("Validation Errors:", errors);
+  useEffect(() => {
+    setOpenSections((prev) => {
+      const next = { ...prev };
+      groups.forEach((g, i) => {
+        if (next[g.title] === undefined) next[g.title] = i === 0;
+      });
+      return next;
+    });
+  }, [groups]);
+
+  const toggleSection = (title: string) => {
+    setOpenSections((prev) => ({ ...prev, [title]: !prev[title] }));
   };
 
-  const renderField = (field: any) => {
-    return (
-      <Controller
-        key={field.key}
-        name={field.key}
-        control={control}
-        rules={{ required: field.required ? 'Обязательное поле' : false }}
-        render={({ field: { onChange, value } }) => {
-          switch (field.type) {
-            
-            // 🔥 БЕЗОПАСНАЯ ДАТА (Через модалку, без крашей)
-            case 'date':
-              return (
-                <>
-                  <IonItem 
-                    lines="none" 
-                    detail={false} 
-                    onClick={() => setShowDateModal(field.key)}
-                    style={{'--padding-start': '0', '--inner-padding-end': '0', cursor: 'pointer'}}
-                  >
-                     <IonIcon icon={calendarOutline} slot="start" color="primary" style={{marginRight: '8px'}} />
-                     <IonLabel style={{color: value ? '#000' : '#a0aec0'}}>
-                        {value ? new Date(value).toLocaleDateString('ru-RU') : 'Выберите дату'}
-                     </IonLabel>
-                  </IonItem>
-                  
-                  <IonModal 
-                    isOpen={showDateModal === field.key} 
-                    onDidDismiss={() => setShowDateModal(null)}
-                    keepContentsMounted={true} 
-                  >
-                    <IonHeader>
-                        <IonToolbar>
-                            <IonTitle>Выберите дату</IonTitle>
-                            <IonButtons slot="end">
-                                <IonButton onClick={() => setShowDateModal(null)}>Закрыть</IonButton>
-                            </IonButtons>
-                        </IonToolbar>
-                    </IonHeader>
-                    <IonContent className="ion-padding">
-                        <div style={{display: 'flex', justifyContent: 'center'}}>
-                            <IonDatetime 
-                                presentation="date" 
-                                value={value} 
-                                onIonChange={e => onChange(e.detail.value)} 
-                            />
-                        </div>
-                    </IonContent>
-                  </IonModal>
-                </>
-              );
+  const onError = (_errors: any) => {};
 
-            case 'select':
-              return (
-                <IonSelect value={value} onIonChange={e => onChange(e.detail.value)} placeholder="Выберите" interface="action-sheet">
-                  {field.options?.map((opt: string) => <IonSelectOption key={opt} value={opt}>{opt}</IonSelectOption>)}
-                </IonSelect>
-              );
+  const renderFieldControl = (field: ActFieldConfig) => (
+    <Controller
+      name={field.key}
+      control={control}
+      rules={{ required: field.required ? 'Обязательное поле' : false }}
+      render={({ field: { onChange, value } }) => {
+        switch (field.type) {
+          case 'date':
+            return (
+              <>
+                <IonItem
+                  lines="none"
+                  detail={false}
+                  className={styles.dateTrigger}
+                  onClick={() => setShowDateModal(field.key)}
+                >
+                  <IonIcon icon={calendarOutline} slot="start" color="primary" />
+                  <IonLabel className={value ? styles.dateValue : styles.datePlaceholder}>
+                    {value ? new Date(value).toLocaleDateString('ru-RU') : 'Выберите дату'}
+                  </IonLabel>
+                </IonItem>
 
-            case 'textarea':
-            case 'address':
-              return <IonTextarea value={value} onIonInput={e => onChange(e.detail.value)} autoGrow rows={3} placeholder={field.label} />;
+                <IonModal
+                  isOpen={showDateModal === field.key}
+                  onDidDismiss={() => setShowDateModal(null)}
+                  keepContentsMounted={true}
+                >
+                  <IonHeader>
+                    <IonToolbar>
+                      <IonTitle>Выберите дату</IonTitle>
+                      <IonButtons slot="end">
+                        <IonButton onClick={() => setShowDateModal(null)}>Закрыть</IonButton>
+                      </IonButtons>
+                    </IonToolbar>
+                  </IonHeader>
+                  <IonContent className="ion-padding">
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                      <IonDatetime
+                        presentation="date"
+                        value={value}
+                        onIonChange={(e) => onChange(e.detail.value)}
+                      />
+                    </div>
+                  </IonContent>
+                </IonModal>
+              </>
+            );
 
-            case 'image':
-              return (
-                <div style={{width: '100%', marginTop: '8px'}}>
-                   {value ? (
-                       <div style={{position: 'relative', width: '100%', height: '200px', borderRadius: '12px', overflow: 'hidden'}}>
-                           <img src={value} style={{width: '100%', height: '100%', objectFit: 'cover'}} alt="evidence" />
-                           <div style={{position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.5)', borderRadius: '50%', padding: '4px'}} onClick={() => onChange('')}>
-                               <IonIcon icon={closeCircle} style={{color: 'white', fontSize: '24px'}} />
-                           </div>
-                       </div>
-                   ) : (
-                       <div style={{border: '2px dashed #cbd5e0', borderRadius: '12px', height: '100px', background: '#f8fafc', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative'}}>
-                           <IonIcon icon={cameraOutline} style={{fontSize: '24px', color: '#a0aec0'}} />
-                           <div style={{fontSize: '12px', color: '#a0aec0'}}>Добавить фото</div>
-                           <input type="file" accept="image/*" style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0}}
-                              onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                      const reader = new FileReader();
-                                      reader.onloadend = () => onChange(reader.result);
-                                      reader.readAsDataURL(file);
-                                  }
-                              }}
-                           />
-                       </div>
-                   )}
+          case 'select':
+            return (
+              <IonSelect
+                value={value}
+                onIonChange={(e) => onChange(e.detail.value)}
+                placeholder="Выберите"
+                interface="action-sheet"
+                className={styles.fieldControl}
+              >
+                {field.options?.map((opt: string) => (
+                  <IonSelectOption key={opt} value={opt}>
+                    {opt}
+                  </IonSelectOption>
+                ))}
+              </IonSelect>
+            );
+
+          case 'textarea':
+          case 'address':
+            return (
+              <IonTextarea
+                value={value}
+                onIonInput={(e) => onChange(e.detail.value)}
+                autoGrow
+                rows={3}
+                placeholder={field.label}
+                className={styles.fieldControl}
+              />
+            );
+
+          case 'image':
+            return value ? (
+              <div className={styles.imagePreview}>
+                <img src={value} alt="evidence" />
+                <div className={styles.imageClear} onClick={() => onChange('')}>
+                  <IonIcon icon={closeCircle} />
                 </div>
-              );
-
-            case 'signature':
-                return <SignaturePad value={value} onChange={onChange} />;
-
-            default:
-              return (
-                <IonInput 
-                    value={value} 
-                    onIonInput={e => onChange(e.detail.value)} 
-                    type={field.type === 'number' ? 'number' : 'text'}
-                    placeholder={field.label}
+              </div>
+            ) : (
+              <div className={styles.dropzone}>
+                <IonIcon icon={cameraOutline} className={styles.dropzoneIcon} />
+                <div className={styles.dropzoneText}>Добавить фото</div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className={styles.dropzoneInput}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => onChange(reader.result);
+                      reader.readAsDataURL(file);
+                    }
+                  }}
                 />
-              );
-          }
-        }}
-      />
-    );
-  };
+              </div>
+            );
+
+          case 'signature':
+            return <SignaturePad value={value} onChange={onChange} />;
+
+          default:
+            return (
+              <IonInput
+                value={value}
+                onIonInput={(e) => onChange(e.detail.value)}
+                type={field.type === 'number' ? 'number' : 'text'}
+                placeholder={field.label}
+                className={styles.fieldControl}
+              />
+            );
+        }
+      }}
+    />
+  );
 
   return (
-    <form onSubmit={handleSubmit(onSave, onError)}>
-      <IonList lines="none" style={{background: 'transparent', paddingBottom: '140px'}}>
-        {template.fields.map((field) => (
-          <div key={field.key} style={{marginBottom: '16px'}}>
-            {field.section && (
-              <div style={{fontSize: '13px', fontWeight: '800', color: '#4a5568', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '24px 4px 8px 4px'}}>
-                {field.section}
+    <form className={styles.form} onSubmit={handleSubmit(onSave, onError)}>
+      {groups.map((group, index) => {
+        const open = openSections[group.title] !== false;
+        const accent = sectionAccent(group.title, index);
+        const icon = sectionIcon(group.title);
+
+        return (
+          <section
+            key={group.title}
+            className={`${styles.section}${open ? '' : ` ${styles.sectionCollapsed}`}`}
+            style={{ ['--act-accent' as string]: accent }}
+          >
+            <div
+              className={styles.sectionHead}
+              onClick={() => toggleSection(group.title)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleSection(group.title);
+                }
+              }}
+            >
+              <div className={styles.sectionHeadMain}>
+                <IonIcon icon={icon} className={styles.sectionIcon} />
+                <div>
+                  <div className={styles.sectionTitle}>{group.title}</div>
+                  <div className={styles.sectionSubtitle}>
+                    {open ? `${group.fields.length} полей` : 'Нажмите, чтобы раскрыть'}
+                  </div>
+                </div>
+              </div>
+              <IonIcon
+                icon={chevronDownOutline}
+                className={`${styles.sectionChevron}${open ? ` ${styles.sectionChevronOpen}` : ''}`}
+              />
+            </div>
+
+            {open && (
+              <div className={styles.sectionBody}>
+                {group.fields.map((field) => (
+                  <div
+                    key={field.key}
+                    className={`${styles.field}${errors[field.key] ? ` ${styles.fieldError}` : ''}`}
+                  >
+                    <label className={styles.fieldLabel}>
+                      {field.label}{' '}
+                      {field.required && <span className={styles.fieldRequired}>*</span>}
+                    </label>
+                    {renderFieldControl(field)}
+                    {errors[field.key] && (
+                      <div className={styles.fieldHint}>Обязательное поле</div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
-            <IonItem style={{'--background': 'white', '--border-radius': '16px', '--padding-start': '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', border: errors[field.key] ? '1px solid #e53e3e' : 'none'}}>
-              <div style={{width: '100%', padding: '10px 0'}}>
-                  <IonLabel position="stacked" style={{marginBottom: '6px', fontSize: '12px', fontWeight: '600', color: '#718096'}}>
-                    {field.label} {field.required && <span style={{color: '#e53e3e'}}>*</span>}
-                  </IonLabel>
-                  {renderField(field)}
-              </div>
-            </IonItem>
-          </div>
-        ))}
-      </IonList>
+          </section>
+        );
+      })}
 
-      <div style={{position: 'fixed', bottom: '100px', left: '16px', right: '16px', zIndex: 1000}}>
-        <IonButton expand="block" type="submit" style={{'--border-radius': '14px', fontWeight: 'bold', height: '54px', '--box-shadow': '0 8px 20px rgba(49, 130, 206, 0.3)'}}>
+      <div className={styles.fabBar}>
+        <IonButton expand="block" type="submit">
           Сохранить акт
         </IonButton>
       </div>

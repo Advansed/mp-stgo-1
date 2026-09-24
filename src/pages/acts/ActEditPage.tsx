@@ -19,11 +19,21 @@ import { useActsStore } from '../../store/actsStore';
 import { useAuthStore } from '../../store/authStore';
 import { useInvoiceStore } from '../../store/invoiceStore';
 import { useLicsStore } from '../../store/licsStore';
-import { invoicesApi } from '../../api/invoicesApi';
 import { ACT_TEMPLATES } from '../../features/acts/configs/registry';
 import { GenericForm } from '../../features/acts/components/GenericForm';
+import { toDetailsObject } from '../../domain/objects';
 import { normalizeInvoice } from '../../domain/normalizers';
 import { normalizeAddress, normalizeFio } from '../../utils/formatters';
+import { getLicCode } from '../../utils/licsFormat';
+import {
+  applyWorksToWcTo,
+  countWcToServiceSlots,
+  trimWcToServiceFields,
+} from '../../features/acts/utils/wcToFromWorks';
+import WorkCompleted, { type WorkCompletedFormHandle } from './WorkCompleted';
+import { useWorkCompletedActSave } from './useWorkCompletedActSave';
+import { useWorkCompletedInitialValues } from './useWorkCompletedInitialValues';
+import './ActEditPage.css';
 
 type Params = {
   id: string;
@@ -51,12 +61,10 @@ export const ActEditPage: React.FC = () => {
     setCurrentAct,
   } = useActsStore();
 
-  // 1) Заявка из стора
   const invoiceFromStore = useInvoiceStore((s) => s.list.find((i) => String(i.id) === String(id)));
-
-  // 2) Фоллбек: догружаем заявки списком
-  const [fetchedInvoice, setFetchedInvoice] = useState<any>(null);
+  const ensureInvoiceById = useInvoiceStore((s) => s.ensureById);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const invoiceFetchAttemptedRef = useRef<string | null>(null);
 
   const [showToast, setShowToast] = useState(false);
   const [errorAlert, setErrorAlert] = useState<string | null>(null);
@@ -77,6 +85,8 @@ export const ActEditPage: React.FC = () => {
   }, [isNew, typeParam, currentAct?.type, actFromList?.type]);
 
   const template = actType ? ACT_TEMPLATES[actType] : undefined;
+  const isWorkCompleted = actType === 'work_completed';
+  const workCompletedFormRef = useRef<WorkCompletedFormHandle>(null);
 
   // чистим currentAct при уходе
   useEffect(() => {
@@ -109,43 +119,30 @@ export const ActEditPage: React.FC = () => {
     });
   }, [isNew, token, id, actType, loadActDraft]);
 
-  // ФОЛЛБЕК ДОГРУЗКИ ЗАЯВКИ
   useEffect(() => {
-    const hasData = invoiceFromStore || fetchedInvoice;
-    if (!hasData && token && id && !invoiceLoading) {
-      setInvoiceLoading(true);
-      invoicesApi
-        .fetchAll(token)
-        .then((data) => {
-          if (Array.isArray(data)) {
-            const found = data.find((i: any) => String(i.id) === String(id));
-            if (found) setFetchedInvoice(found);
-          }
-        })
-        .finally(() => setInvoiceLoading(false));
-    }
-  }, [invoiceFromStore, fetchedInvoice, token, id, invoiceLoading]);
+    if (!token || !id || invoiceFromStore) return;
+    if (invoiceFetchAttemptedRef.current === id) return;
+    invoiceFetchAttemptedRef.current = id;
+    setInvoiceLoading(true);
+    ensureInvoiceById(token, id).finally(() => setInvoiceLoading(false));
+  }, [invoiceFromStore, token, id, ensureInvoiceById]);
 
   const cleanInvoice = useMemo(() => {
-    const raw = invoiceFromStore || fetchedInvoice;
-    if (!raw) return null;
-    return normalizeInvoice(raw);
-  }, [invoiceFromStore, fetchedInvoice]);
+    if (!invoiceFromStore) return null;
+    return normalizeInvoice(invoiceFromStore);
+  }, [invoiceFromStore]);
 
-  // ЛС из стора, чтобы вытащить пломбу (если есть)
   const lics = useLicsStore((s) => s.list);
   const licObj = useMemo(() => {
     const code = String(cleanInvoice?.lic || '').trim();
     if (!code) return null;
-    return (
-      lics.find((l: any) => String(l.code || l.account || l.lic || '').trim() === code) || null
-    );
+    return lics.find((l) => getLicCode(l) === code) || null;
   }, [lics, cleanInvoice?.lic]);
 
   const sealFromLic = useMemo(() => {
-    const counters = licObj?.counters || licObj?.meters || licObj?.counter || [];
-    const first = Array.isArray(counters) ? counters[0] : null;
-    const seal = first?.seal || first?.seal_number || licObj?.seal || '';
+    const counters = licObj?.counters || licObj?.meters || licObj?.['counter'] || [];
+    const first = Array.isArray(counters) ? (counters[0] as Record<string, unknown> | undefined) : undefined;
+    const seal = first?.seal || first?.seal_number || licObj?.['seal'] || '';
     return String(seal || '').trim();
   }, [licObj]);
 
@@ -159,8 +156,8 @@ export const ActEditPage: React.FC = () => {
     if (!isNew) {
       if (!currentAct || Object.keys(currentAct).length === 0) return null;
 
-      const details = currentAct.details || {};
-      return {
+      const details = toDetailsObject(currentAct.details);
+      let merged: Record<string, unknown> = {
         ...currentAct,
         ...details,
         lic: currentAct.lic || details.lic || cleanInvoice?.lic || '',
@@ -174,15 +171,20 @@ export const ActEditPage: React.FC = () => {
         technician_name:
           currentAct.technician_name || details.technician_name || technicianName || '',
       };
+
+      if (actType === 'work_completed_to') {
+        merged = applyWorksToWcTo(merged, cleanInvoice);
+      }
+      return merged;
     }
 
     // NEW
     const draft = currentAct; // после loadActDraft сюда приходит черновик с act_number
     if (!draft || Object.keys(draft).length === 0) return null;
 
-    const d = draft.details || {};
+    const d = toDetailsObject(draft.details);
 
-    const merged: any = {
+    let merged: Record<string, unknown> = {
       ...draft,
       ...d,
 
@@ -200,6 +202,7 @@ export const ActEditPage: React.FC = () => {
         normalizeAddress(cleanInvoice?.addressText) ||
         '',
       technician_name: draft.technician_name || d.technician_name || technicianName || '',
+      request_text: draft.request_text || d.request_text || cleanInvoice?.service || '',
     };
 
     // Автоподстановка пломбы, если в форме есть нужные ключи и поле пустое
@@ -212,8 +215,56 @@ export const ActEditPage: React.FC = () => {
       }
     }
 
+    if (actType === 'work_completed_to') {
+      merged = applyWorksToWcTo(merged, cleanInvoice);
+    }
+
     return merged;
   }, [isNew, currentAct, cleanInvoice, actType, technicianName, sealFromLic, template]);
+
+  const formTemplate = useMemo(() => {
+    if (!template) return undefined;
+    if (actType !== 'work_completed_to' || !initialData) return template;
+    return trimWcToServiceFields(template, countWcToServiceSlots(initialData));
+  }, [template, actType, initialData]);
+
+  const { initialValues: workCompletedInitialValues, loading: workCompletedInitialLoading } =
+    useWorkCompletedInitialValues({
+      enabled: isWorkCompleted && !!currentAct,
+      token,
+      draft: currentAct,
+      invoice: cleanInvoice,
+    });
+
+  const workCompletedSaveMeta = useMemo(() => {
+    if (!isWorkCompleted || !currentAct?.act_number) return null;
+    return {
+      id: currentAct.id,
+      invoice_id: id,
+      act_number: currentAct.act_number,
+      status: currentAct.status || 'draft',
+      title: template?.name || 'Акт выполненных работ',
+      document_scan_path: currentAct.document_scan_path || '',
+    };
+  }, [isWorkCompleted, currentAct, id, template]);
+
+  const {
+    save: saveWorkCompleted,
+    saving: savingWorkCompleted,
+    error: workCompletedError,
+    clearError: clearWorkCompletedError,
+  } = useWorkCompletedActSave({
+    token,
+    meta: workCompletedSaveMeta,
+    formRef: workCompletedFormRef,
+    onSaved: (savedAct) => {
+      setShowToast(true);
+      setCurrentAct(savedAct);
+      if (isNew && savedAct?.id) {
+        history.replace(`/app/invoices/${id}/acts/${savedAct.id}/edit`);
+      }
+    },
+  });
 
   const handleSave = async (data: any) => {
     if (!token) return;
@@ -260,20 +311,23 @@ export const ActEditPage: React.FC = () => {
   const hasActForForm = !!initialData;
   const isLoading =
     (actLoading && !hasActForForm) ||
-    (invoiceLoading && isNew && !cleanInvoice && !hasActForForm);
+    (invoiceLoading && isNew && !cleanInvoice && !hasActForForm) ||
+    (isWorkCompleted && workCompletedInitialLoading && !!currentAct);
 
   if (!template) {
     return (
       <IonPage>
-        <IonHeader>
-          <IonToolbar>
+        <IonHeader className="ion-no-border">
+          <IonToolbar className="actEditToolbar">
             <IonButtons slot="start">
-              <IonBackButton defaultHref={`/app/invoices/${id}/acts`} />
+              <IonBackButton defaultHref={`/app/invoices/${id}/acts`} text="" color="dark" />
             </IonButtons>
-            <IonTitle>Тип акта не найден</IonTitle>
+            <IonTitle className="actEditTitle">Тип акта не найден</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <IonContent className="ion-padding">Не удалось определить тип акта.</IonContent>
+        <IonContent style={{ '--background': '#f7fafc' }}>
+          Не удалось определить тип акта.
+        </IonContent>
       </IonPage>
     );
   }
@@ -281,14 +335,14 @@ export const ActEditPage: React.FC = () => {
   if (isLoading) {
     return (
       <IonPage>
-        <IonHeader>
-          <IonToolbar>
+        <IonHeader className="ion-no-border">
+          <IonToolbar className="actEditToolbar">
             <IonButtons slot="start">
-              <IonBackButton defaultHref={`/app/invoices/${id}/acts`} />
+              <IonBackButton defaultHref={`/app/invoices/${id}/acts`} text="" color="dark" />
             </IonButtons>
           </IonToolbar>
         </IonHeader>
-        <IonContent>
+        <IonContent style={{ '--background': '#f7fafc' }}>
           <div className="ion-text-center ion-padding" style={{ marginTop: '50px' }}>
             <IonSpinner />
           </div>
@@ -302,25 +356,24 @@ export const ActEditPage: React.FC = () => {
     return (
       <IonPage>
         <IonHeader className="ion-no-border">
-          <IonToolbar>
+          <IonToolbar className="actEditToolbar">
             <IonButtons slot="start">
               <IonBackButton defaultHref={`/app/invoices/${id}/acts`} text="" color="dark" />
             </IonButtons>
-            <IonTitle style={{ fontSize: '16px' }}>{template.name}</IonTitle>
+            <IonTitle className="actEditTitle">{template.name}</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <IonContent fullscreen className="ion-padding" style={{ '--background': '#f7fafc' }}>
-          <div style={{ background: 'white', padding: '16px', borderRadius: '16px' }}>
+        <IonContent fullscreen style={{ '--background': '#f7fafc' }}>
+          <div className="actEditEmptyCard">
             <b>Не удалось получить черновик акта.</b>
-            <div style={{ marginTop: '8px', color: '#718096' }}>
+            <div className="actEditEmptyHint">
               Сервер должен вернуть номер акта через <code>mp_get_act</code> с <code>act_type</code>.
             </div>
             <IonButton
               expand="block"
-              style={{ marginTop: '14px' }}
+              style={{ marginTop: '14px', '--border-radius': '12px' }}
               onClick={() => {
                 if (!token) return;
-                // разрешаем повторный запрос
                 draftRequestedRef.current = false;
                 loadActDraft(token, id, actType);
               }}
@@ -336,11 +389,11 @@ export const ActEditPage: React.FC = () => {
   return (
     <IonPage>
       <IonHeader className="ion-no-border">
-        <IonToolbar>
+        <IonToolbar className="actEditToolbar">
           <IonButtons slot="start">
             <IonBackButton defaultHref={`/app/invoices/${id}/acts`} text="" color="dark" />
           </IonButtons>
-          <IonTitle style={{ fontSize: '16px' }}>{template.name}</IonTitle>
+          <IonTitle className="actEditTitle">{template.name}</IonTitle>
           <IonButtons slot="end">
             <IonButton onClick={handlePreview} color="primary">
               <IonIcon slot="icon-only" icon={eyeOutline} />
@@ -350,15 +403,37 @@ export const ActEditPage: React.FC = () => {
       </IonHeader>
 
       <IonContent fullscreen style={{ '--background': '#f7fafc' }}>
-        <div style={{ padding: '16px' }}>
-          <GenericForm
-            // ключ, чтобы форма корректно reset-нулась при приходе draft/details
-            key={String(currentAct?.id || initialData?.act_number || (isNew ? actType : actId) || 'form')}
-            template={template}
-            initialData={initialData || {}}
-            onSave={handleSave}
-          />
-        </div>
+        {isWorkCompleted ? (
+          <>
+            <div className="actEditWcWrap">
+              <WorkCompleted
+                key={String(currentAct?.id || actId || 'wc')}
+                embedded
+                formRef={workCompletedFormRef}
+                defaultBackHref={`/app/invoices/${id}/acts`}
+                initialActDate={workCompletedInitialValues?.act_date}
+                initialValues={workCompletedInitialValues}
+                serverActNumber={currentAct?.act_number}
+              />
+            </div>
+
+            <div className="actEditFab">
+              <IonButton expand="block" onClick={() => saveWorkCompleted()} disabled={savingWorkCompleted}>
+                {savingWorkCompleted ? <IonSpinner name="crescent" slot="start" /> : null}
+                Сохранить акт
+              </IonButton>
+            </div>
+          </>
+        ) : (
+          <div className="actEditBody">
+            <GenericForm
+              key={String(currentAct?.id || initialData?.act_number || (isNew ? actType : actId) || 'form')}
+              template={formTemplate || template}
+              initialData={initialData || {}}
+              onSave={handleSave}
+            />
+          </div>
+        )}
 
         <IonToast
           isOpen={showToast}
@@ -367,6 +442,13 @@ export const ActEditPage: React.FC = () => {
           duration={2000}
           color="success"
           icon={checkmarkCircle}
+        />
+        <IonToast
+          isOpen={!!workCompletedError}
+          message={workCompletedError || ''}
+          duration={3500}
+          onDidDismiss={clearWorkCompletedError}
+          color="danger"
         />
         <IonAlert
           isOpen={!!errorAlert}
