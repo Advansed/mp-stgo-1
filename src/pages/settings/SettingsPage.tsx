@@ -190,7 +190,8 @@ export const SettingsPage: React.FC = () => {
                 <IonLabel>
                   <div className="settings-label">Геолокация</div>
                   <IonNote className="settings-note">
-                    Координаты отправляются каждые 5 мин, пока приложение открыто
+                    Координаты каждые 5 мин, в том числе в свёрнутом состоянии (уведомление в шторке).
+                    После выхода из аккаунта трекинг останавливается
                   </IonNote>
                 </IonLabel>
               </IonItem>
