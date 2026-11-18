@@ -1,10 +1,116 @@
 /* src/theme/variables.css */
 
+:root {
+  --stng-brand-deep: #182E78;
+  --stng-brand-blue: #0B7CB5;
+  --stng-brand-mint: #90DBD9;
+  --stng-deep-hover: #233F91;
+  --stng-blue-hover: #096A9C;
+  --stng-bg: #F3F8FC;
+  --stng-bg-elevated: #E8F2F8;
+  --stng-surface: #FFFFFF;
+  --stng-surface-hover: #F7FBFD;
+  --stng-border: #C9DBE8;
+  --stng-text: #182E78;
+  --stng-text-muted: #526680;
+  --stng-primary: #0B7CB5;
+  --stng-primary-hover: #096A9C;
+  --stng-focus: #90DBD9;
+  --stng-warning: #B25135;
+  --stng-danger: #B43F4F;
+  --stng-status-neutral-bg: #EEF3F7;
+  --stng-status-neutral-border: #BDCCD8;
+  --stng-status-neutral-text: #42566D;
+  --stng-status-new-bg: #EDF3F7;
+  --stng-status-new-border: #B8CBD8;
+  --stng-status-new-text: #36516B;
+  --stng-status-assigned-bg: #E8F2FA;
+  --stng-status-assigned-border: #A5C9E1;
+  --stng-status-assigned-text: #155E8D;
+  --stng-status-work-bg: #DCF2F5;
+  --stng-status-work-border: #85CBD2;
+  --stng-status-work-text: #096B79;
+  --stng-status-hold-bg: #FFF2E9;
+  --stng-status-hold-border: #E5B9A1;
+  --stng-status-hold-text: #96502F;
+  --stng-status-done-bg: #E7F5EE;
+  --stng-status-done-border: #9BCDB4;
+  --stng-status-done-text: #246B50;
+  --stng-shadow-card: 0 3px 14px rgba(24, 46, 120, 0.05);
+  --stng-shadow-action: 0 12px 28px rgba(11, 124, 181, 0.22);
+  --stng-radius-sm: 6px;
+  --stng-radius-md: 12px;
+  --stng-radius-lg: 18px;
+  --stng-font: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --ion-font-family: var(--stng-font);
+  --ion-background-color: var(--stng-bg);
+  --ion-text-color: var(--stng-text);
+  --ion-color-primary: #0B7CB5;
+  --ion-color-primary-rgb: 11, 124, 181;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #096A9C;
+  --ion-color-primary-tint: #2389bc;
+  --ion-color-danger: #B43F4F;
+  --ion-color-danger-rgb: 180, 63, 79;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #9e3746;
+  --ion-color-danger-tint: #bc5261;
+  --ion-color-warning: #B25135;
+  --ion-color-warning-rgb: 178, 81, 53;
+  --ion-color-warning-contrast: #ffffff;
+  --ion-color-warning-contrast-rgb: 255, 255, 255;
+  --ion-color-warning-shade: #9d472f;
+  --ion-color-warning-tint: #ba6249;
+  --ion-color-success: #246B50;
+  --ion-color-success-rgb: 36, 107, 80;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-contrast-rgb: 255, 255, 255;
+  --ion-color-success-shade: #205e46;
+  --ion-color-success-tint: #3a7a62;
+}
+
+body {
+  font-family: var(--stng-font);
+  background: var(--stng-bg);
+  color: var(--stng-text);
+}
+
+ion-content.stng-content {
+  --background: var(--stng-bg);
+  --color: var(--stng-text);
+}
+
+ion-title {
+  color: var(--stng-brand-deep);
+}
+
+ion-toolbar.stng-toolbar {
+  --background: var(--stng-surface);
+  --color: var(--stng-brand-deep);
+  --border-color: transparent;
+}
+
+.stng-title {
+  font-weight: 800;
+  font-size: 24px;
+  color: var(--stng-brand-deep);
+  padding-left: 16px;
+  letter-spacing: -0.03em;
+}
+
+ion-refresher {
+  --background: var(--stng-brand-blue);
+  --color: #fff;
+}
+
 /* ===  PREMIUM FAB BUTTON (Кнопка +) === */
 .corporate-fab-button {
-  --background: var(--corp-primary, #1e3a8a);
-  --background-activated: var(--corp-primary-dark, #102a70);
-  --background-hover: var(--corp-primary-light, #2b4cad);
+  --background: var(--stng-primary);
+  --background-activated: var(--stng-primary-hover);
+  --background-hover: var(--stng-blue-hover);
   --color: white;
   --border-radius: 20px; /* Квадрат с сильными скруглениями (Modern) */
   --box-shadow: 0 8px 25px rgba(30, 58, 138, 0.4);
@@ -27,8 +133,8 @@
 /* Убираем странные вырезы, делаем чистое нижнее меню */
 ion-action-sheet.sc-ion-action-sheet-md {
   --background: white;
-  --color: #1f2937;
-  --button-color: #1f2937;
+  --color: var(--stng-text);
+  --button-color: var(--stng-text);
 }
 
 .action-sheet-group.sc-ion-action-sheet-md {
@@ -44,7 +150,7 @@ ion-action-sheet.sc-ion-action-sheet-md {
   font-size: 16px;
   font-weight: 500;
   height: 56px;
-  color: #374151;
+  color: var(--stng-text);
 }
 
 .action-sheet-button.sc-ion-action-sheet-md:active {
@@ -53,7 +159,7 @@ ion-action-sheet.sc-ion-action-sheet-md {
 
 /* Кнопка отмены */
 .action-sheet-cancel.sc-ion-action-sheet-md {
-  color: #ef4444;
+  color: var(--stng-danger);
   font-weight: 700;
   border-top: 1px solid #f3f4f6;
   margin-top: 8px;
@@ -62,5 +168,5 @@ ion-action-sheet.sc-ion-action-sheet-md {
 /* Иконки в меню (если добавишь потом) */
 .action-sheet-icon {
   margin-right: 16px;
-  color: #6b7280;
+  color: var(--stng-text-muted);
 }

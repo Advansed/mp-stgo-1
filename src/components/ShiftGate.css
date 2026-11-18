@@ -1,0 +1,56 @@
+.shift-gate-content::part(scroll) {
+  display: flex;
+  flex-direction: column;
+}
+
+.shift-gate {
+  flex: 1;
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px 32px;
+  box-sizing: border-box;
+}
+
+.shift-gate__panel {
+  width: min(100%, 420px);
+  text-align: center;
+}
+
+.shift-gate--pending {
+  align-items: center;
+  gap: 12px;
+}
+
+.shift-gate__title {
+  font-weight: 800;
+  font-size: 24px;
+  color: var(--stng-brand-deep);
+  margin-bottom: 6px;
+}
+
+.shift-gate__user {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--stng-text-muted);
+  margin-bottom: 8px;
+}
+
+.shift-gate__lead {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--stng-text-muted);
+}
+
+.shift-gate .shift-card__head {
+  flex-direction: column;
+  align-items: center;
+}
+
+.shift-gate .shift-card__meta,
+.shift-gate .shift-card__note,
+.shift-gate .shift-card__error {
+  text-align: center;
+}

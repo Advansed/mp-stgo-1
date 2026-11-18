@@ -1,5 +1,6 @@
 .actsListToolbar {
-  --background: #f7fafc;
+  --background: var(--stng-surface);
+  --color: var(--stng-brand-deep);
 }
 
 .actsListBody {
@@ -16,10 +17,10 @@
 
 .actsCard {
   --background: white;
-  --border-radius: 20px;
+  --border-radius: 12px;
   margin-bottom: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  box-shadow: var(--stng-shadow-card);
+  border: 1px solid var(--stng-border);
   overflow: hidden;
   position: relative;
 }
@@ -31,26 +32,26 @@
 .actsCardIcon {
   width: 42px;
   height: 42px;
-  background: #ebf8ff;
+  background: var(--stng-status-assigned-bg);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 16px;
-  color: #3182ce;
+  color: var(--stng-brand-blue);
   flex-shrink: 0;
 }
 
 .actsCardTitle {
   font-weight: 700;
   font-size: 15px;
-  color: #111827;
+  color: var(--stng-brand-deep);
   margin: 0;
 }
 
 .actsCardMeta {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--stng-text-muted);
   margin: 4px 0 0;
 }
 
@@ -59,7 +60,7 @@
   --width: 100%;
   --height: 85%;
   --border-radius: 20px 20px 0 0;
-  --background: #f7fafc;
+  --background: var(--stng-bg);
   align-items: flex-end;
 }
 
@@ -71,7 +72,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #f7fafc;
+  background: var(--stng-bg);
   box-sizing: border-box;
 }
 
@@ -87,14 +88,14 @@
 .actsTypeSheet__title {
   font-size: 18px;
   font-weight: 800;
-  color: #111827;
+  color: var(--stng-brand-deep);
   letter-spacing: -0.2px;
 }
 
 .actsTypeSheet__subtitle {
   margin-top: 2px;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--stng-text-muted);
 }
 
 .actsTypeSheet__close {
@@ -103,7 +104,7 @@
   border: none;
   border-radius: 10px;
   background: #eef2f7;
-  color: #64748b;
+  color: var(--stng-text-muted);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -116,7 +117,7 @@
 }
 
 .actsTypeSheet__content {
-  --background: #f7fafc;
+  --background: var(--stng-bg);
   flex: 1 1 auto;
   min-height: 0;
 }
@@ -134,18 +135,18 @@
   gap: 12px;
   width: 100%;
   text-align: left;
-  border: 1px solid rgba(15, 23, 42, 0.05);
-  border-radius: 16px;
-  background: #ffffff;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  border: 1px solid var(--stng-border);
+  border-radius: var(--stng-radius-md);
+  background: var(--stng-surface);
+  box-shadow: var(--stng-shadow-card);
   padding: 14px 14px;
   cursor: pointer;
-  color: #111827;
+  color: var(--stng-brand-deep);
 }
 
 .actsTypeSheet__item--accent {
-  border-color: rgba(37, 99, 235, 0.25);
-  background: #f8fbff;
+  border-color: var(--stng-status-assigned-border);
+  background: var(--stng-status-assigned-bg);
 }
 
 .actsTypeSheet__item:active {
@@ -157,8 +158,8 @@
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: #eff6ff;
-  color: #2563eb;
+  background: var(--stng-status-assigned-bg);
+  color: var(--stng-brand-blue);
   display: inline-flex;
   align-items: center;
   justify-content: center;

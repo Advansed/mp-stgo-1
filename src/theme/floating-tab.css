@@ -17,11 +17,11 @@ ion-tab-bar.floating-tab-bar::before {
   height: 68px; /* Чуть выше стандарта для удобства */
   
   /* Визуал */
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(10px); /* Эффект стекла (blur) */
+  background: var(--stng-surface, #fff);
+  backdrop-filter: blur(10px);
   border-radius: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12); /* Мягкая глубокая тень */
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 10px 28px rgba(24, 46, 120, 0.12);
+  border: 1px solid var(--stng-border, #C9DBE8);
   
   /* Внутренние отступы */
   padding-bottom: 0; /* Убираем safe-area отступ внутри плашки */
@@ -31,9 +31,9 @@ ion-tab-bar.floating-tab-bar::before {
 /* Стили кнопок */
 .floating-tab-bar ion-tab-button {
   --background: transparent;
-  --color: var(--corp-gray-400, #a0aec0);
-  --color-selected: var(--corp-primary, #086CA2);
-  --ripple-color: var(--corp-primary);
+  --color: var(--stng-text-muted, #526680);
+  --color-selected: var(--stng-brand-blue, #0B7CB5);
+  --ripple-color: var(--stng-brand-blue, #0B7CB5);
   
   border-radius: 16px;
   margin: 4px;
@@ -42,7 +42,7 @@ ion-tab-bar.floating-tab-bar::before {
 
 /* Анимация при выборе */
 .floating-tab-bar ion-tab-button.tab-selected {
-  background: rgba(8, 108, 162, 0.05); /* Легкий фон активной вкладки */
+  background: rgba(11, 124, 181, 0.08);
 }
 
 .floating-tab-bar ion-tab-button ion-icon {
@@ -54,7 +54,7 @@ ion-tab-bar.floating-tab-bar::before {
 /* "Прыжок" иконки при выборе */
 .floating-tab-bar ion-tab-button.tab-selected ion-icon {
   transform: translateY(-2px);
-  color: var(--corp-primary);
+  color: var(--stng-brand-blue, #0B7CB5);
 }
 
 .floating-tab-bar ion-tab-button ion-label {

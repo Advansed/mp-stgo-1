@@ -1,0 +1,66 @@
+.shift-card {
+  background: var(--stng-surface);
+  border-radius: var(--stng-radius-md);
+  padding: 14px;
+  margin: 0 0 12px;
+  box-shadow: var(--stng-shadow-card);
+  border: 1px solid var(--stng-border);
+  border-left: 4px solid #a0aec0;
+}
+
+.shift-card--list {
+  margin: 0 12px 12px;
+}
+
+.shift-card--open {
+  border-left-color: var(--stng-status-done-text);
+}
+
+.shift-card__head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.shift-card__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  background: var(--stng-bg-elevated);
+  color: var(--stng-text-muted);
+  font-size: 20px;
+}
+
+.shift-card__icon--open {
+  background: var(--stng-status-done-bg);
+  color: var(--stng-status-done-text);
+}
+
+.shift-card__meta {
+  min-width: 0;
+}
+
+.shift-card__title {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--stng-brand-deep);
+  line-height: 1.2;
+}
+
+.shift-card__note {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--stng-text-muted);
+}
+
+.shift-card__error {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--stng-danger);
+}

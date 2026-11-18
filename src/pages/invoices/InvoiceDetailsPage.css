@@ -1,13 +1,30 @@
 /* === СТРАНИЦА ДЕТАЛЕЙ ЗАЯВКИ === */
 .inv-details ion-content {
-  --background: #f7fafc;
-  --color: #1f2937;
+  --background: var(--stng-bg);
+  --color: var(--stng-text);
   --overflow: auto;
 }
 
 .inv-details__body {
   padding: 16px;
   padding-bottom: 280px;
+}
+
+.inv-pay__sum {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.inv-pay__qr {
+  display: block;
+  width: min(280px, 100%);
+  height: auto;
+  margin: 16px auto;
+}
+
+.inv-pay__note {
+  text-align: center;
+  color: #718096;
 }
 
 .inv-details__title {
@@ -28,20 +45,21 @@
 }
 
 .inv-details__toolbar {
-  --background: #f7fafc;
+  --background: var(--stng-surface);
+  --color: var(--stng-brand-deep);
 }
 
 /* === СЕКЦИЯ === */
 .inv-section {
-  background: white;
-  border-radius: 20px;
+  background: var(--stng-surface);
+  border-radius: var(--stng-radius-md);
   padding: 20px;
   margin: 0 0 16px 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  box-shadow: var(--stng-shadow-card);
+  border: 1px solid var(--stng-border);
   position: relative;
   overflow: hidden;
-  color: #1f2937;
+  color: var(--stng-text);
 }
 
 .inv-section::before {
@@ -49,37 +67,37 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 6px;
+  width: 4px;
   height: 100%;
-  background: #2563eb;
+  background: var(--stng-brand-blue);
 }
 
 .inv-section--address::before {
-  background: #ef4444;
+  background: var(--stng-brand-blue);
 }
 
 .inv-section--task::before {
-  background: #d69e2e;
+  background: var(--stng-warning);
 }
 
 .inv-section--debt::before {
-  background: #ef4444;
+  background: var(--stng-warning);
 }
 
 .inv-section--work::before {
-  background: #f59e0b;
+  background: var(--stng-brand-mint);
 }
 
 .inv-section--counters::before {
-  background: #0ea5e9;
+  background: var(--stng-brand-mint);
 }
 
 .inv-section--agreements::before {
-  background: #8b5cf6;
+  background: var(--stng-brand-deep);
 }
 
 .inv-section--equipments::before {
-  background: #f59e0b;
+  background: var(--stng-warning);
 }
 
 .inv-section__header {
@@ -127,24 +145,24 @@
 
 .inv-section__icon {
   font-size: 22px;
-  color: #2563eb;
+  color: var(--stng-brand-blue);
   flex-shrink: 0;
 }
 
 .inv-section--address .inv-section__icon {
-  color: #ef4444;
+  color: var(--stng-brand-blue);
 }
 
 .inv-section--task .inv-section__icon {
-  color: #d69e2e;
+  color: var(--stng-warning);
 }
 
 .inv-section--debt .inv-section__icon {
-  color: #ef4444;
+  color: var(--stng-warning);
 }
 
 .inv-section--work .inv-section__icon {
-  color: #f59e0b;
+  color: #138693;
   font-size: calc(22px - 2pt);
 }
 
@@ -161,27 +179,27 @@
 }
 
 .inv-section--counters .inv-section__icon {
-  color: #0ea5e9;
+  color: #138693;
 }
 
 .inv-section--agreements .inv-section__icon {
-  color: #8b5cf6;
+  color: var(--stng-brand-deep);
 }
 
 .inv-section--equipments .inv-section__icon {
-  color: #f59e0b;
+  color: var(--stng-warning);
 }
 
 .inv-section__title {
   font-size: 16px;
   font-weight: 700;
-  color: #111827;
+  color: var(--stng-brand-deep);
   line-height: 1.2;
 }
 
 .inv-section__subtitle {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--stng-text-muted);
   margin-top: 2px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -229,7 +247,7 @@
 .inv-row__title {
   font-size: 13px;
   font-weight: 400;
-  color: #374151;
+  color: var(--stng-text);
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -238,7 +256,7 @@
 
 .inv-row__meta {
   font-size: 11px;
-  color: #6b7280;
+  color: var(--stng-text-muted);
   margin-top: 4px;
   line-height: 1.4;
 }
@@ -250,7 +268,7 @@
 .inv-row__value {
   font-size: 13px;
   font-weight: 400;
-  color: #4b5563;
+  color: var(--stng-text-muted);
   white-space: nowrap;
 }
 
@@ -268,27 +286,27 @@
   font-size: 11px;
   font-weight: 700;
   background: #f3f4f6;
-  color: #4b5563;
+  color: var(--stng-text-muted);
 }
 
 .inv-chip--success {
-  background: #f0fdf4;
-  color: #166534;
+  background: var(--stng-status-done-bg);
+  color: var(--stng-status-done-text);
 }
 
 .inv-chip--warning {
-  background: #fffbeb;
-  color: #b45309;
+  background: var(--stng-status-hold-bg);
+  color: var(--stng-status-hold-text);
 }
 
 .inv-chip--danger {
-  background: #fef2f2;
-  color: #b91c1c;
+  background: #FDECEE;
+  color: var(--stng-danger);
 }
 
 .inv-chip--muted {
   background: #f3f4f6;
-  color: #6b7280;
+  color: var(--stng-text-muted);
 }
 
 .inv-chip--link {
@@ -324,16 +342,16 @@
   align-items: center;
   gap: 10px;
   padding: 8px 0 4px;
-  color: #6b7280;
+  color: var(--stng-text-muted);
   font-size: 13px;
 }
 
 .inv-lic-status--error {
-  color: #b91c1c;
+  color: var(--stng-danger);
 }
 
 .inv-lic-link {
-  color: #2563eb;
+  color: var(--stng-brand-blue);
   font-weight: 600;
 }
 
@@ -372,9 +390,9 @@
 }
 
 .inv-details__fab-bar > ion-button {
-  --background: #3182ce;
-  --border-radius: 14px;
-  --box-shadow: 0 4px 12px rgba(49, 130, 206, 0.4);
+  --background: var(--stng-primary);
+  --border-radius: 11px;
+  --box-shadow: var(--stng-shadow-action);
   height: 52px;
   font-size: 15px;
   font-weight: 700;

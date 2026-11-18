@@ -3,7 +3,7 @@
 .settings-title {
   font-weight: 800;
   font-size: 24px;
-  color: #2d3748;
+  color: var(--stng-brand-deep);
   padding-left: 16px;
 }
 
@@ -14,9 +14,10 @@
 
 .profile-card {
   background: #ffffff;
-  border-radius: 18px;
+  border-radius: var(--stng-radius-md);
   padding: 16px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--stng-border);
+  box-shadow: var(--stng-shadow-card);
   display: flex;
   gap: 12px;
   align-items: center;
@@ -30,7 +31,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(49, 130, 206, 0.95), rgba(128, 90, 213, 0.95));
+  background: var(--stng-brand-deep);
   color: #fff;
   font-size: 26px;
   flex: 0 0 auto;
@@ -44,7 +45,7 @@
 .profile-name {
   font-weight: 800;
   font-size: 16px;
-  color: #1a202c;
+  color: var(--stng-brand-deep);
   line-height: 1.2;
 }
 
@@ -57,8 +58,8 @@
 
 .profile-pill {
   font-size: 12px;
-  color: #4a5568;
-  background: #edf2f7;
+  color: var(--stng-text-muted);
+  background: var(--stng-bg-elevated);
   border-radius: 999px;
   padding: 6px 10px;
 }
@@ -66,7 +67,7 @@
 .section-head {
   font-weight: 800;
   font-size: 13px;
-  color: #718096;
+  color: var(--stng-brand-blue);
   margin: 12px 2px 10px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
@@ -74,9 +75,10 @@
 
 .settings-card {
   background: #ffffff;
-  border-radius: 18px;
+  border-radius: var(--stng-radius-md);
   overflow: hidden;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--stng-border);
+  box-shadow: var(--stng-shadow-card);
   margin-bottom: 12px;
 }
 
@@ -89,18 +91,18 @@
 
 .settings-icon {
   font-size: 20px;
-  color: #3182ce;
+  color: var(--stng-brand-blue);
   opacity: 0.95;
 }
 
 .settings-label {
   font-weight: 800;
-  color: #1a202c;
+  color: var(--stng-brand-deep);
   font-size: 14px;
 }
 
 .settings-note {
-  color: #718096;
+  color: var(--stng-text-muted);
   font-size: 12px;
   margin-top: 2px;
 }
@@ -110,7 +112,7 @@
 }
 
 .settings-item.danger .settings-icon {
-  color: #e53e3e;
+  color: var(--stng-danger);
 }
 
 .logout-wrap {

@@ -106,7 +106,7 @@ export const ActsListPage: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent fullscreen style={{ '--background': '#f7fafc' }}>
+      <IonContent fullscreen className="stng-content">
         <div className="actsListBody">
           {loading && (
             <div className="ion-text-center ion-padding">

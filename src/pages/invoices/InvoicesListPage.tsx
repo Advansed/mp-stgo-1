@@ -23,14 +23,14 @@ export const InvoicesListPage: React.FC = () => {
   return (
     <IonPage>
       <IonHeader className="ion-no-border">
-        <IonToolbar style={{'--background': '#f7fafc'}}>
-          <IonTitle style={{fontWeight: '800', fontSize: '24px', color: '#2d3748', paddingLeft: '16px'}}>
+        <IonToolbar className="stng-toolbar">
+          <IonTitle className="stng-title">
             Заявки
           </IonTitle>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent fullscreen style={{'--background': '#f7fafc'}}>
+      <IonContent fullscreen className="stng-content">
         <IonRefresher slot="fixed" onIonRefresh={doRefresh}>
           <IonRefresherContent />
         </IonRefresher>

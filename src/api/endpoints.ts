@@ -24,6 +24,14 @@ export const API_METHODS = {
 
   // Геолокация
   SET_LOCATION:     'mp_set_location',
+
+  SBP:              'mp_sbp',
+  SBP_STATUS:       'mp_sbp_status',
+
+  // Смена
+  OPEN_SESSION:     'open_session',
+  GET_SESSION:      'get_session',
+  CLOSE_SESSION:    'close_session',
 };
 
 export const VESTA_METHODS = {

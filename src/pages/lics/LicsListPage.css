@@ -1,13 +1,17 @@
 /* src/pages/lics/LicsListPage.css */
 
 .lics-page ion-content {
-  --background: #f7fafc;
-  --color: #1f2937;
+  --background: var(--stng-bg);
+  --color: var(--stng-text);
   --overflow: auto;
 }
 
 .lics-page-title {
-  font-weight: 700;
+  font-weight: 800;
+  font-size: 24px;
+  color: var(--stng-brand-deep);
+  padding-left: 16px;
+  letter-spacing: -0.03em;
 }
 
 .lics-list {
@@ -64,7 +68,7 @@
   font-weight: 600;
   height: 32px;
   background: #f3f4f6;
-  color: #374151;
+  color: var(--stng-text);
   border: none;
 }
 
@@ -80,11 +84,11 @@
 
 .result-item ion-label h2 {
   font-weight: 600;
-  color: #111827;
+  color: var(--stng-brand-deep);
 }
 
 .result-item ion-label p {
-  color: #6b7280;
+  color: var(--stng-text-muted);
 }
 
 .result-item-nav {
@@ -94,11 +98,11 @@
 .item-icon-wrapper {
   width: 40px;
   height: 40px;
-  background: #eff6ff;
+  background: var(--stng-status-assigned-bg);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 16px;
-  color: #2563eb;
+  color: var(--stng-brand-blue);
 }

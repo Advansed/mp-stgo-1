@@ -4,12 +4,12 @@
 
 .section {
   background: white;
-  border-radius: 20px;
+  border-radius: var(--stng-radius-md);
   padding: 0.5em;
-  padding-left: calc(0.5em + 6px);
+  padding-left: calc(0.5em + 4px);
   margin: 0 0 0.5em;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  box-shadow: var(--stng-shadow-card);
+  border: 1px solid var(--stng-border);
   position: relative;
   overflow: hidden;
   color: #1f2937;
@@ -20,9 +20,9 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 6px;
+  width: 4px;
   height: 100%;
-  background: var(--act-accent, #2563eb);
+  background: var(--act-accent, var(--stng-brand-blue));
 }
 
 .sectionCollapsed .sectionHead {
@@ -50,20 +50,20 @@
 
 .sectionIcon {
   font-size: 22px;
-  color: var(--act-accent, #2563eb);
+  color: var(--act-accent, var(--stng-brand-blue));
   flex-shrink: 0;
 }
 
 .sectionTitle {
   font-size: 16px;
   font-weight: 700;
-  color: #111827;
+  color: var(--stng-brand-deep);
   line-height: 1.2;
 }
 
 .sectionSubtitle {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--stng-text-muted);
   margin-top: 2px;
 }
 
@@ -108,7 +108,7 @@
   margin-bottom: 6px;
   font-size: 12px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--stng-text-muted);
 }
 
 .fieldRequired {
@@ -134,11 +134,11 @@
 }
 
 .dateTrigger:focus-within {
-  border-bottom-color: #3182ce;
+  border-bottom-color: var(--stng-brand-blue);
 }
 
 .dateValue {
-  color: #111827;
+  color: var(--stng-brand-deep);
   font-size: calc(16px - 1pt);
   font-weight: 700;
 }
@@ -271,9 +271,9 @@
 }
 
 .fabBar ion-button {
-  --background: #3182ce;
-  --border-radius: 14px;
-  --box-shadow: 0 4px 12px rgba(49, 130, 206, 0.4);
+  --background: var(--stng-primary);
+  --border-radius: 11px;
+  --box-shadow: var(--stng-shadow-action);
   height: 56px;
   font-size: 16px;
   font-weight: 700;
@@ -298,7 +298,7 @@
 }
 
 .fieldControl:focus-within {
-  border-bottom-color: #3182ce;
+  border-bottom-color: var(--stng-brand-blue);
   border-bottom-width: 2px;
 }
 

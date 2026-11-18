@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Redirect, Route } from 'react-router-dom';
 import { IonTabs, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/react';
 import { documentsOutline, walletOutline, settingsOutline } from 'ionicons/icons';
+import { useAuthStore } from '../../store/authStore';
+import { useSessionStore } from '../../store/sessionStore';
+import { ShiftGate, ShiftPending } from '../../components/ShiftGate';
 
 import { InvoicesListPage } from '../invoices/InvoicesListPage';
 import { InvoiceDetailsPage } from '../invoices/InvoiceDetailsPage';
@@ -16,6 +19,42 @@ import { LicDetailsPage } from '../lics/LicDetailsPage';
 import '../../theme/floating-tab.css';
 
 export const TabsLayout: React.FC = () => {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isOpen = useSessionStore((s) => s.isOpen);
+  const settled = useSessionStore((s) => s.settled);
+  const [authHydrated, setAuthHydrated] = useState(() =>
+    useAuthStore.persist.hasHydrated()
+  );
+  const [sessionHydrated, setSessionHydrated] = useState(() =>
+    useSessionStore.persist.hasHydrated()
+  );
+
+  useEffect(() => {
+    setAuthHydrated(useAuthStore.persist.hasHydrated());
+    return useAuthStore.persist.onFinishHydration(() => setAuthHydrated(true));
+  }, []);
+
+  useEffect(() => {
+    setSessionHydrated(useSessionStore.persist.hasHydrated());
+    return useSessionStore.persist.onFinishHydration(() => setSessionHydrated(true));
+  }, []);
+
+  if (!authHydrated || !sessionHydrated) {
+    return <ShiftPending />;
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect to="/login" />;
+  }
+
+  if (!isOpen && !settled) {
+    return <ShiftPending label="Проверяем смену" />;
+  }
+
+  if (!isOpen) {
+    return <ShiftGate />;
+  }
+
   return (
     <IonTabs>
       <IonRouterOutlet>

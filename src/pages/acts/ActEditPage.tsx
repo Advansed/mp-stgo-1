@@ -325,7 +325,7 @@ export const ActEditPage: React.FC = () => {
             <IonTitle className="actEditTitle">Тип акта не найден</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <IonContent style={{ '--background': '#f7fafc' }}>
+        <IonContent style={{ '--background': 'var(--stng-bg)' }}>
           Не удалось определить тип акта.
         </IonContent>
       </IonPage>
@@ -342,7 +342,7 @@ export const ActEditPage: React.FC = () => {
             </IonButtons>
           </IonToolbar>
         </IonHeader>
-        <IonContent style={{ '--background': '#f7fafc' }}>
+        <IonContent style={{ '--background': 'var(--stng-bg)' }}>
           <div className="ion-text-center ion-padding" style={{ marginTop: '50px' }}>
             <IonSpinner />
           </div>
@@ -363,7 +363,7 @@ export const ActEditPage: React.FC = () => {
             <IonTitle className="actEditTitle">{template.name}</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <IonContent fullscreen style={{ '--background': '#f7fafc' }}>
+        <IonContent fullscreen style={{ '--background': 'var(--stng-bg)' }}>
           <div className="actEditEmptyCard">
             <b>Не удалось получить черновик акта.</b>
             <div className="actEditEmptyHint">
@@ -402,7 +402,7 @@ export const ActEditPage: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent fullscreen style={{ '--background': '#f7fafc' }}>
+      <IonContent fullscreen style={{ '--background': 'var(--stng-bg)' }}>
         {isWorkCompleted ? (
           <>
             <div className="actEditWcWrap">

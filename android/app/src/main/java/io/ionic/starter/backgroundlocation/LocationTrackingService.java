@@ -40,12 +40,14 @@ public class LocationTrackingService extends Service {
   private static final String CHANNEL_ID = "mp_stgo_location";
   private static final int NOTIFICATION_ID = 42001;
   private static final String TAG = "LocTrackingService";
+  private static final long FIX_TIMEOUT_MS = 20_000L;
 
   private final Handler handler = new Handler(Looper.getMainLooper());
   private LocationManager locationManager;
   private LocationListener locationListener;
-  private long intervalMs = 5 * 60 * 1000L;
+  private long intervalMs = 15_000L;
   private boolean running = false;
+  private boolean awaitingFix = false;
 
   private final Runnable tickRunnable = new Runnable() {
     @Override
@@ -56,30 +58,43 @@ public class LocationTrackingService extends Service {
     }
   };
 
+  private final Runnable fixTimeoutRunnable = new Runnable() {
+    @Override
+    public void run() {
+      if (!awaitingFix) return;
+      awaitingFix = false;
+      removeLocationListener();
+      Log.w(TAG, "no fix within " + FIX_TIMEOUT_MS + "ms");
+    }
+  };
+
   @Override
   public void onCreate() {
     super.onCreate();
     locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
     ensureChannel();
+    Log.i(TAG, "onCreate");
   }
 
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     if (intent == null) {
+      Log.w(TAG, "onStartCommand null intent");
       stopSelf();
       return START_NOT_STICKY;
     }
 
     String action = intent.getAction();
     if (ACTION_STOP.equals(action)) {
+      Log.i(TAG, "ACTION_STOP");
       stopTracking();
       stopSelf();
       return START_NOT_STICKY;
     }
 
-    intervalMs = intent.getLongExtra(EXTRA_INTERVAL_MS, 5 * 60 * 1000L);
-    if (intervalMs < 60_000L) {
-      intervalMs = 60_000L;
+    intervalMs = intent.getLongExtra(EXTRA_INTERVAL_MS, 15_000L);
+    if (intervalMs < 5_000L) {
+      intervalMs = 5_000L;
     }
 
     String title = intent.getStringExtra(EXTRA_TITLE);
@@ -87,15 +102,29 @@ public class LocationTrackingService extends Service {
     if (title == null || title.isEmpty()) title = "МП СТГО";
     if (message == null || message.isEmpty()) message = "Отслеживание местоположения";
 
-    Notification notification = buildNotification(title, message);
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-      startForeground(
-        NOTIFICATION_ID,
-        notification,
-        ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
-      );
-    } else {
-      startForeground(NOTIFICATION_ID, notification);
+    Log.i(
+      TAG,
+      "onStart intervalMs=" + intervalMs
+        + " hasPerm=" + hasLocationPermission()
+        + " gps=" + isProviderEnabled(LocationManager.GPS_PROVIDER)
+        + " net=" + isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+    );
+
+    try {
+      Notification notification = buildNotification(title, message);
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        startForeground(
+          NOTIFICATION_ID,
+          notification,
+          ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+        );
+      } else {
+        startForeground(NOTIFICATION_ID, notification);
+      }
+    } catch (Exception e) {
+      Log.e(TAG, "startForeground failed", e);
+      stopSelf();
+      return START_NOT_STICKY;
     }
 
     if (!running) {
@@ -108,6 +137,7 @@ public class LocationTrackingService extends Service {
 
   @Override
   public void onDestroy() {
+    Log.i(TAG, "onDestroy");
     stopTracking();
     super.onDestroy();
   }
@@ -119,7 +149,9 @@ public class LocationTrackingService extends Service {
 
   private void stopTracking() {
     running = false;
+    awaitingFix = false;
     handler.removeCallbacks(tickRunnable);
+    handler.removeCallbacks(fixTimeoutRunnable);
     removeLocationListener();
     stopForeground(STOP_FOREGROUND_REMOVE);
   }
@@ -142,29 +174,52 @@ public class LocationTrackingService extends Service {
         == PackageManager.PERMISSION_GRANTED;
   }
 
+  private boolean isProviderEnabled(String provider) {
+    try {
+      return locationManager != null && locationManager.isProviderEnabled(provider);
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
   private void requestOneFix() {
+    Log.i(TAG, "requestOneFix");
     if (!hasLocationPermission() || locationManager == null) {
       Log.w(TAG, "no location permission or manager");
       return;
     }
 
     try {
-      Location last = null;
+      Location best = null;
       if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
           == PackageManager.PERMISSION_GRANTED) {
-        last = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        best = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
       }
-      if (last == null) {
-        last = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+      Location net = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+      if (best == null) {
+        best = net;
+      } else if (net != null && net.getTime() > best.getTime()) {
+        best = net;
       }
-      if (last != null && System.currentTimeMillis() - last.getTime() < intervalMs) {
-        emit(last);
+
+      // Always emit lastKnown when available (even if older than interval).
+      if (best != null) {
+        Log.i(TAG, "lastKnown ageMs=" + (System.currentTimeMillis() - best.getTime()));
+        emit(best);
+      } else {
+        Log.w(TAG, "no lastKnown");
       }
 
       removeLocationListener();
+      awaitingFix = true;
+      handler.removeCallbacks(fixTimeoutRunnable);
+      handler.postDelayed(fixTimeoutRunnable, FIX_TIMEOUT_MS);
+
       locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
+          awaitingFix = false;
+          handler.removeCallbacks(fixTimeoutRunnable);
           emit(location);
           removeLocationListener();
         }
@@ -179,13 +234,26 @@ public class LocationTrackingService extends Service {
         public void onProviderDisabled(String provider) {}
       };
 
-      String provider = LocationManager.GPS_PROVIDER;
-      if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-          && locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-        provider = LocationManager.NETWORK_PROVIDER;
+      boolean requested = false;
+      if (isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+        locationManager.requestLocationUpdates(
+          LocationManager.NETWORK_PROVIDER, 0L, 0f, locationListener, Looper.getMainLooper()
+        );
+        requested = true;
+        Log.i(TAG, "requested NETWORK updates");
       }
-
-      locationManager.requestLocationUpdates(provider, 0L, 0f, locationListener, Looper.getMainLooper());
+      if (isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+        locationManager.requestLocationUpdates(
+          LocationManager.GPS_PROVIDER, 0L, 0f, locationListener, Looper.getMainLooper()
+        );
+        requested = true;
+        Log.i(TAG, "requested GPS updates");
+      }
+      if (!requested) {
+        awaitingFix = false;
+        handler.removeCallbacks(fixTimeoutRunnable);
+        Log.w(TAG, "no enabled location providers");
+      }
     } catch (SecurityException e) {
       Log.w(TAG, "requestOneFix security", e);
     } catch (Exception e) {
@@ -195,6 +263,13 @@ public class LocationTrackingService extends Service {
 
   private void emit(Location location) {
     if (location == null) return;
+    Log.i(
+      TAG,
+      "fix lat=" + location.getLatitude()
+        + " lon=" + location.getLongitude()
+        + (location.hasSpeed() ? " speed=" + location.getSpeed() : "")
+        + (location.hasBearing() ? " heading=" + location.getBearing() : "")
+    );
     BackgroundLocationPlugin.emitLocation(
       location.getLatitude(),
       location.getLongitude(),

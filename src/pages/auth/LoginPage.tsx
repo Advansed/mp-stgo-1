@@ -93,8 +93,8 @@ export const LoginPage: React.FC = () => {
             <div className="login-header">
               <div className="logo-container">
                 <img
-                  src="/logo-login.png"
-                  alt="Logo"
+                  src="/assets/brand/stng-wordmark.png"
+                  alt="Сахатранснефтегаз"
                   className="login-logo-img"
                   draggable={false}
                 />

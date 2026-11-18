@@ -97,7 +97,7 @@ export const LicsListPage: React.FC = () => {
       return (
         <IonPage className="lics-page">
           <IonHeader className="ion-no-border">
-            <IonToolbar color="light">
+            <IonToolbar className="stng-toolbar">
               <IonButtons slot="start">
                 <IonButton onClick={searchStore.step === 'settlement' ? () => setIsSearchMode(false) : searchStore.goBack}>
                   <IonIcon icon={arrowBackOutline} />
@@ -115,7 +115,7 @@ export const LicsListPage: React.FC = () => {
             )}
 
             {searchStore.step !== 'lics' && (
-                <IonToolbar color="light" style={{paddingBottom: 5}}>
+                <IonToolbar className="stng-toolbar" style={{paddingBottom: 5}}>
                    <IonSearchbar value={query} onIonInput={e => setQuery(e.detail.value!)} placeholder="Поиск..." />
                 </IonToolbar>
             )}
@@ -178,7 +178,7 @@ export const LicsListPage: React.FC = () => {
   return (
     <IonPage className="lics-page">
       <IonHeader className="ion-no-border">
-        <IonToolbar color="light"><IonTitle className="lics-page-title">Лицевые счета</IonTitle></IonToolbar>
+        <IonToolbar className="stng-toolbar"><IonTitle className="lics-page-title">Лицевые счета</IonTitle></IonToolbar>
       </IonHeader>
 
       <IonContent fullscreen scrollY>

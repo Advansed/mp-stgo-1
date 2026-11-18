@@ -49,4 +49,18 @@ export const invoicesApi = {
       complete_text,
     });
   },
+
+  createSbp: async (token: string, invoiceId: string, amount: number) => {
+    return post<{ orderId?: string; payload?: string | null; renderedQr?: string | null; formUrl?: string | null }>(
+      API_METHODS.SBP,
+      { token, invoice_id: invoiceId, amount }
+    );
+  },
+
+  checkSbp: async (token: string, invoiceId: string) => {
+    return post<Array<{ id: string; orderId: string; amount: number; status: number | null; error: string | null }>>(
+      API_METHODS.SBP_STATUS,
+      { token, invoice_id: invoiceId }
+    );
+  },
 };

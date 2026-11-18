@@ -1,14 +1,14 @@
 /* === КАРТОЧКА ЛИЦЕВОГО СЧЕТА === */
 .lic-card {
-  background: white;
-  border-radius: 20px;
+  background: var(--stng-surface);
+  border-radius: var(--stng-radius-md);
   padding: 20px;
   margin: 0 0 16px 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  box-shadow: var(--stng-shadow-card);
+  border: 1px solid var(--stng-border);
   position: relative;
   overflow: hidden;
-  color: #1f2937;
+  color: var(--stng-text);
   transition: transform 0.1s ease;
 }
 
@@ -17,9 +17,9 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 6px;
+  width: 4px;
   height: 100%;
-  background: #2563eb;
+  background: var(--stng-brand-blue);
 }
 
 .lic-card--clickable {
@@ -46,14 +46,14 @@
 .lic-card__number {
   font-size: 20px;
   font-weight: 800;
-  color: #111827;
+  color: var(--stng-brand-deep);
   letter-spacing: -0.5px;
   margin-bottom: 4px;
 }
 
 .lic-card__fio {
   font-size: 14px;
-  color: #4b5563;
+  color: var(--stng-text-muted);
   margin-bottom: 12px;
   display: flex;
   align-items: center;
@@ -66,7 +66,7 @@
 
 .lic-card__address {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--stng-text-muted);
   background: #f9fafb;
   padding: 6px 10px;
   border-radius: 8px;

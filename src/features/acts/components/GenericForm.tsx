@@ -33,17 +33,17 @@ import {
 import type { ActFieldConfig, ActTemplateConfig } from '../types';
 import styles from './GenericForm.module.css';
 
-const ACCENTS = ['#2563eb', '#0ea5e9', '#8b5cf6', '#d69e2e', '#0d9488', '#ef4444', '#f59e0b', '#6366f1'];
+const ACCENTS = ['#0B7CB5', '#90DBD9', '#182E78', '#B25135', '#138693', '#B43F4F'];
 
 function sectionAccent(title: string, index: number): string {
   const t = title.toLowerCase();
-  if (t.includes('подпис')) return '#6366f1';
-  if (t.includes('абонент') || t.includes('владель')) return '#2563eb';
-  if (t.includes('объект') || t.includes('адрес')) return '#ef4444';
-  if (t.includes('прибор') || t.includes('счетчик') || t.includes('счётчик') || t.includes('пломб')) return '#0ea5e9';
-  if (t.includes('оборуд')) return '#f59e0b';
-  if (t.includes('услуг') || t.includes('работ')) return '#d69e2e';
-  if (t.includes('фото') || t.includes('реквизит') || t.includes('данн')) return '#0d9488';
+  if (t.includes('подпис')) return '#182E78';
+  if (t.includes('абонент') || t.includes('владель')) return '#0B7CB5';
+  if (t.includes('объект') || t.includes('адрес')) return '#0B7CB5';
+  if (t.includes('прибор') || t.includes('счетчик') || t.includes('счётчик') || t.includes('пломб')) return '#90DBD9';
+  if (t.includes('оборуд')) return '#B25135';
+  if (t.includes('услуг') || t.includes('работ')) return '#B25135';
+  if (t.includes('фото') || t.includes('реквизит') || t.includes('данн')) return '#138693';
   return ACCENTS[index % ACCENTS.length];
 }
 

@@ -12,6 +12,8 @@ import {
   IonButton,
   IonSpinner,
   IonToast,
+  IonModal,
+  IonTextarea,
 } from '@ionic/react';
 import {
   locationOutline,
@@ -29,7 +31,9 @@ import {
   playOutline,
   pauseOutline,
   checkmarkDoneOutline,
+  chatbubbleOutline,
 } from 'ionicons/icons';
+import { invoicesApi } from '../../api/invoicesApi';
 import { useInvoiceStore } from '../../store/invoiceStore';
 import { useAuthStore } from '../../store/authStore';
 import { useLicsStore } from '../../store/licsStore';
@@ -39,6 +43,7 @@ import {
   getLicDisplay,
   getWorkSubtitle,
   getWorkTitle,
+  invoicePayAmount,
   LicDebtRows,
   pickWorks,
   WorkDetailRows,
@@ -46,6 +51,26 @@ import {
 import './InvoiceDetailsPage.css';
 
 type SectionAccent = 'default' | 'address' | 'task' | 'debt' | 'work';
+
+function paymentStatusText(status: number | null): string {
+  if (status === 2) return 'Оплачено';
+  if (status === 6) return 'Отклонено';
+  if (status === 3) return 'Отменено';
+  return 'Ожидает оплату';
+}
+
+async function paymentQrSrc(rendered: string | null | undefined, payload: string | null | undefined) {
+  const picture = rendered?.trim();
+  if (picture) {
+    if (picture.startsWith('data:image') || picture.startsWith('http://') || picture.startsWith('https://')) {
+      return picture;
+    }
+    return `data:image/png;base64,${picture}`;
+  }
+  if (!payload) return '';
+  const QRCode = (await import('qrcode')).default;
+  return QRCode.toDataURL(payload, { margin: 1, width: 280 });
+}
 
 const STATUS_ASSIGNED = 'Назначен';
 const STATUS_IN_PROGRESS = 'В работе';
@@ -153,6 +178,8 @@ export const InvoiceDetailsPage: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [addingLic, setAddingLic] = useState(false);
   const [statusSaving, setStatusSaving] = useState(false);
+  const [commentStatus, setCommentStatus] = useState<string | null>(null);
+  const [statusComment, setStatusComment] = useState('');
   const [clientOpen, setClientOpen] = useState(false);
   const [addressOpen, setAddressOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
@@ -174,6 +201,15 @@ export const InvoiceDetailsPage: React.FC = () => {
     if (fromInvoice.length) return fromInvoice;
     return pickWorks(licDetails);
   }, [invoice, licDetails]);
+
+  const payAmount = useMemo(() => invoicePayAmount(invoice ? pickWorks(invoice) : []), [invoice]);
+  const [payOpen, setPayOpen] = useState(false);
+  const [payLoading, setPayLoading] = useState(false);
+  const [payQr, setPayQr] = useState('');
+  const [payError, setPayError] = useState('');
+  const [payStatus, setPayStatus] = useState('');
+  const [payStatusError, setPayStatusError] = useState('');
+  const [statusChecking, setStatusChecking] = useState(false);
 
   useEffect(() => {
     if (!invoice && token) {
@@ -243,22 +279,39 @@ export const InvoiceDetailsPage: React.FC = () => {
     ? new Date(invoice.date).toLocaleDateString('ru-RU')
     : '';
 
-  const handleSetStatus = async (nextStatus: string) => {
+  const savedComment = String(invoice.complete_text ?? '').trim();
+  const showSavedComment =
+    (statusKind === 'done' || statusKind === 'postponed') &&
+    Boolean(savedComment) &&
+    savedComment.toLowerCase() !== status.trim().toLowerCase();
+  const savedCommentDate = invoice.complete_date
+    ? new Date(String(invoice.complete_date)).toLocaleDateString('ru-RU')
+    : '';
+
+  const handleSetStatus = async (nextStatus: string, comment?: string) => {
     if (!token || !id || statusSaving) return;
     setStatusSaving(true);
     try {
-      const result = await setInvoiceStatus(token, id, nextStatus, nextStatus);
+      const result = await setInvoiceStatus(token, id, nextStatus, comment);
       if (!result.success) {
         setToastMessage(result.message || 'Не удалось изменить статус');
         setShowToast(true);
         return;
       }
+      setCommentStatus(null);
       setToastMessage(`Статус: ${nextStatus}`);
       setShowToast(true);
     } finally {
       setStatusSaving(false);
     }
   };
+
+  const openStatusComment = (nextStatus: string) => {
+    setStatusComment('');
+    setCommentStatus(nextStatus);
+  };
+
+  const isDoneComment = commentStatus === STATUS_DONE;
 
   const handleCall = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -278,6 +331,45 @@ export const InvoiceDetailsPage: React.FC = () => {
   const handleEditAddress = (e: React.MouseEvent) => {
     e.stopPropagation();
     history.push(`/app/invoices/${id}/address`);
+  };
+
+  const handlePay = async () => {
+    if (!token || !invoice || payAmount <= 0 || payLoading) return;
+    setPayOpen(true);
+    setPayLoading(true);
+    setPayQr('');
+    setPayError('');
+    setPayStatus('');
+    setPayStatusError('');
+    const res = await invoicesApi.createSbp(token, invoice.id, payAmount);
+    if (!res.success) {
+      setPayError(res.message || res.description || 'Не удалось создать оплату');
+      setPayLoading(false);
+      return;
+    }
+    try {
+      setPayQr(await paymentQrSrc(res.data?.renderedQr, res.data?.payload));
+      if (!res.data?.renderedQr && !res.data?.payload) setPayError('Банк не вернул QR');
+    } catch {
+      setPayError('Не удалось показать QR');
+    }
+    setPayLoading(false);
+  };
+
+  const handleCheckPay = async () => {
+    if (!token || !invoice || statusChecking) return;
+    setStatusChecking(true);
+    setPayStatusError('');
+    const res = await invoicesApi.checkSbp(token, invoice.id);
+    const row = Array.isArray(res.data) ? res.data[0] : undefined;
+    if (!res.success || !row) {
+      setPayStatus('');
+      setPayStatusError(res.message || res.description || 'Оплата не найдена');
+    } else {
+      setPayStatus(paymentStatusText(row.status));
+      setPayStatusError(row.error || '');
+    }
+    setStatusChecking(false);
   };
 
   const handleOpenLic = async (e: React.MouseEvent) => {
@@ -520,6 +612,42 @@ export const InvoiceDetailsPage: React.FC = () => {
               </div>
             )}
           </Section>
+
+          {showSavedComment && (
+            <Section
+              title="Комментарий к статусу"
+              icon={chatbubbleOutline}
+              aside={
+                savedCommentDate ? (
+                  <span className="inv-chip inv-chip--muted">{savedCommentDate}</span>
+                ) : undefined
+              }
+            >
+              <div className="inv-row">
+                <div className="inv-row__main">
+                  <div className="inv-row__meta">{savedComment}</div>
+                </div>
+              </div>
+            </Section>
+          )}
+
+          <Section title="Оплата" icon={walletOutline}>
+            <div className="inv-row">
+              <div className="inv-row__main">
+                <div className="inv-row__title">Сумма по работам</div>
+                <div className="inv-row__meta inv-pay__sum">{formatSum(payAmount)}</div>
+              </div>
+            </div>
+            {payAmount <= 0 && (
+              <div className="inv-lic-status">В табличной части нет тарифа для оплаты</div>
+            )}
+            <div className="inv-section__actions">
+              <IonButton expand="block" disabled={payAmount <= 0 || payLoading} onClick={handlePay}>
+                {payLoading ? <IonSpinner name="crescent" slot="start" /> : null}
+                Оплатить
+              </IonButton>
+            </div>
+          </Section>
         </div>
 
         <IonToast
@@ -528,6 +656,66 @@ export const InvoiceDetailsPage: React.FC = () => {
           duration={2500}
           onDidDismiss={() => setShowToast(false)}
         />
+
+        <IonModal isOpen={commentStatus !== null} onDidDismiss={() => setCommentStatus(null)}>
+          <IonHeader>
+            <IonToolbar>
+              <IonTitle>{isDoneComment ? 'Завершение заявки' : 'Отложить заявку'}</IonTitle>
+              <IonButtons slot="end">
+                <IonButton onClick={() => setCommentStatus(null)}>Отмена</IonButton>
+              </IonButtons>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent className="ion-padding">
+            <p style={{ marginTop: 0, color: '#718096', fontSize: '14px' }}>
+              Комментарий к статусу «{commentStatus}». Можно оставить пустым.
+            </p>
+            <IonTextarea
+              autoGrow
+              rows={4}
+              value={statusComment}
+              placeholder="Комментарий (необязательно)"
+              onIonInput={(e) => setStatusComment(String(e.detail.value || ''))}
+            />
+            <IonButton
+              expand="block"
+              color={isDoneComment ? 'success' : 'warning'}
+              style={{ marginTop: '16px', '--border-radius': '14px', height: '52px', fontWeight: 'bold' }}
+              disabled={statusSaving}
+              onClick={() => commentStatus && handleSetStatus(commentStatus, statusComment)}
+            >
+              {statusSaving ? <IonSpinner name="crescent" slot="start" /> : null}
+              {isDoneComment ? 'Завершить' : 'Отложить'}
+            </IonButton>
+          </IonContent>
+        </IonModal>
+
+        <IonModal isOpen={payOpen} onDidDismiss={() => setPayOpen(false)}>
+          <IonHeader>
+            <IonToolbar>
+              <IonTitle>Оплата</IonTitle>
+              <IonButtons slot="end">
+                <IonButton onClick={() => setPayOpen(false)}>Закрыть</IonButton>
+              </IonButtons>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent className="ion-padding">
+            <p className="inv-pay__note">К оплате {formatSum(payAmount)}</p>
+            {payLoading && (
+              <div className="inv-pay__note">
+                <IonSpinner name="crescent" />
+              </div>
+            )}
+            {payQr && <img className="inv-pay__qr" src={payQr} alt="QR для оплаты" />}
+            {payError && <p className="inv-pay__note">{payError}</p>}
+            {payStatus && <p className="inv-pay__note">{payStatus}</p>}
+            {payStatusError && <p className="inv-pay__note">{payStatusError}</p>}
+            <IonButton expand="block" fill="outline" disabled={statusChecking} onClick={handleCheckPay}>
+              {statusChecking ? <IonSpinner name="crescent" slot="start" /> : null}
+              Проверить оплату
+            </IonButton>
+          </IonContent>
+        </IonModal>
       </IonContent>
 
       <div className="inv-details__fab-bar">
@@ -555,7 +743,7 @@ export const InvoiceDetailsPage: React.FC = () => {
                 color="warning"
                 className="inv-details__status-btn"
                 disabled={statusSaving}
-                onClick={() => handleSetStatus(STATUS_POSTPONED)}
+                onClick={() => openStatusComment(STATUS_POSTPONED)}
               >
                 {statusSaving ? (
                   <IonSpinner name="crescent" slot="start" />
@@ -575,7 +763,7 @@ export const InvoiceDetailsPage: React.FC = () => {
                 color="warning"
                 className="inv-details__status-btn"
                 disabled={statusSaving}
-                onClick={() => handleSetStatus(STATUS_POSTPONED)}
+                onClick={() => openStatusComment(STATUS_POSTPONED)}
               >
                 {statusSaving ? (
                   <IonSpinner name="crescent" slot="start" />
@@ -590,7 +778,7 @@ export const InvoiceDetailsPage: React.FC = () => {
                 color="success"
                 className="inv-details__status-btn"
                 disabled={statusSaving}
-                onClick={() => handleSetStatus(STATUS_DONE)}
+                onClick={() => openStatusComment(STATUS_DONE)}
               >
                 {statusSaving ? (
                   <IonSpinner name="crescent" slot="start" />

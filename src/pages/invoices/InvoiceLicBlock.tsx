@@ -165,6 +165,29 @@ export function pickWorks(source: unknown): unknown[] {
   return pickArray(source, ['works', 'work_list', 'jobs', 'services_list']);
 }
 
+function payLineNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const n = Number(value.replace(/\s/g, '').replace(',', '.'));
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+/** Сумма оплаты: количество × тариф по строкам табличной части заявки. */
+export function invoicePayAmount(works: unknown[]): number {
+  let total = 0;
+  for (const work of works) {
+    if (!work || typeof work !== 'object') continue;
+    const row = work as Record<string, unknown>;
+    const price = payLineNumber(row.tarif ?? row.price ?? row.cost);
+    if (price == null) continue;
+    const qty = payLineNumber(row.amount ?? row.qty ?? row.quantity ?? row.count) ?? 1;
+    total += qty * price;
+  }
+  return Math.round(total * 100) / 100;
+}
+
 export function getWorkTitle(work: unknown, index: number): string {
   if (typeof work === 'string' || typeof work === 'number') {
     return String(work).trim() || `Оборудование ${index + 1}`;

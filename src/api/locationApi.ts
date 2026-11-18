@@ -39,6 +39,15 @@ export const locationApi = {
       body.battery_level = Math.max(0, Math.min(100, Math.round(coords.battery_level)));
     }
 
+    const parts = [
+      `lat=${body.lat}`,
+      `lon=${body.lon}`,
+      body.speed !== undefined ? `speed=${body.speed}` : null,
+      body.heading !== undefined ? `heading=${body.heading}` : null,
+      body.battery_level !== undefined ? `battery_level=${body.battery_level}` : null,
+    ].filter(Boolean);
+    console.log(`[mp_set_location] payload: ${parts.join(' ')}`);
+
     return post(API_METHODS.SET_LOCATION, body);
   },
 };

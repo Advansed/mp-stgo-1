@@ -31,6 +31,8 @@ import {
 } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { useSessionStore } from '../../store/sessionStore';
+import { ShiftControl } from '../../components/ShiftControl';
 import './SettingsPage.css';
 
 const THEME_KEY = 'mp-stgo-theme';
@@ -41,6 +43,7 @@ export const SettingsPage: React.FC = () => {
   // ✅ ВАЖНО: НЕ возвращаем объект из селектора (иначе бесконечные рендеры)
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
+  const clearSession = useSessionStore((s) => s.clear);
 
   const [isDark, setIsDark] = useState<boolean>(() => {
     return localStorage.getItem(THEME_KEY) === 'dark';
@@ -104,11 +107,13 @@ export const SettingsPage: React.FC = () => {
   };
 
   const handleLogout = () => {
+    clearSession();
     logout();
     history.replace('/login');
   };
 
   const handleResetLocalData = () => {
+    clearSession();
     localStorage.clear();
     logout();
     history.replace('/login');
@@ -141,12 +146,12 @@ export const SettingsPage: React.FC = () => {
   return (
     <IonPage>
       <IonHeader className="ion-no-border">
-        <IonToolbar style={{ '--background': '#f7fafc' } as any}>
+        <IonToolbar className="stng-toolbar">
           <IonTitle className="settings-title">Настройки</IonTitle>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent fullscreen style={{ '--background': '#f7fafc' } as any}>
+      <IonContent fullscreen className="stng-content">
         <div className="settings-wrap">
           {/* Профиль */}
           <div className="profile-card">
@@ -162,6 +167,9 @@ export const SettingsPage: React.FC = () => {
               </div>
             </div>
           </div>
+
+          <div className="section-head">Смена</div>
+          <ShiftControl />
 
           {/* Приложение */}
           <div className="section-head">Приложение</div>
@@ -190,8 +198,8 @@ export const SettingsPage: React.FC = () => {
                 <IonLabel>
                   <div className="settings-label">Геолокация</div>
                   <IonNote className="settings-note">
-                    Координаты каждые 5 мин, в том числе в свёрнутом состоянии (уведомление в шторке).
-                    После выхода из аккаунта трекинг останавливается
+                    Координаты уходят каждые 15 сек только пока смена открыта, в том числе в свёрнутом состоянии.
+                    Закрытие смены выходит из аккаунта и останавливает отправку
                   </IonNote>
                 </IonLabel>
               </IonItem>
